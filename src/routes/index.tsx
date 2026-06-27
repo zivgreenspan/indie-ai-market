@@ -22,19 +22,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-type DBProduct = {
-  id: string;
-  slug: string;
-  title: string;
-  tagline: string | null;
-  cover_image_url: string | null;
-  category: string;
-  price_cents: number;
-  currency: string;
-  pricing_model: "one_time" | "subscription";
-  creator: { username: string; display_name: string; avatar_url: string | null } | null;
-};
-
 async function fetchFeatured(): Promise<ProductCardData[]> {
   const { data, error } = await supabase
     .from("products")
@@ -47,18 +34,18 @@ async function fetchFeatured(): Promise<ProductCardData[]> {
 
   if (error) throw error;
   return (data ?? [])
-    .filter((p): p is DBProduct & { creator: NonNullable<DBProduct["creator"]> } => !!p.creator)
+    .filter((p) => !!p.creator)
     .map((p) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,
       tagline: p.tagline,
       cover_image_url: p.cover_image_url,
-      category: p.category,
+      category: p.category as string,
       price_cents: p.price_cents,
       currency: p.currency,
-      pricing_model: p.pricing_model,
-      creator: p.creator,
+      pricing_model: p.pricing_model as "one_time" | "subscription",
+      creator: p.creator as ProductCardData["creator"],
     }));
 }
 
