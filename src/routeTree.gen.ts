@@ -9,38 +9,166 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CUsernameRouteImport } from './routes/c.$username'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
+import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
+import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as AuthenticatedDashboardProductsNewRouteImport } from './routes/_authenticated/dashboard.products.new'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CUsernameRoute = CUsernameRouteImport.update({
+  id: '/c/$username',
+  path: '/c/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBecomeCreatorRoute =
+  AuthenticatedBecomeCreatorRouteImport.update({
+    id: '/become-creator',
+    path: '/become-creator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const PUsernameSlugRoute = PUsernameSlugRouteImport.update({
+  id: '/p/$username/$slug',
+  path: '/p/$username/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardProductsRoute =
+  AuthenticatedDashboardProductsRouteImport.update({
+    id: '/products',
+    path: '/products',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardProductsNewRoute =
+  AuthenticatedDashboardProductsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedDashboardProductsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/become-creator': typeof AuthenticatedBecomeCreatorRoute
+  '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/library': typeof AuthenticatedLibraryRoute
+  '/c/$username': typeof CUsernameRoute
+  '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/become-creator': typeof AuthenticatedBecomeCreatorRoute
+  '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/library': typeof AuthenticatedLibraryRoute
+  '/c/$username': typeof CUsernameRoute
+  '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/c/$username': typeof CUsernameRoute
+  '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/_authenticated/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/become-creator'
+    | '/dashboard'
+    | '/library'
+    | '/c/$username'
+    | '/dashboard/products'
+    | '/p/$username/$slug'
+    | '/dashboard/products/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/become-creator'
+    | '/dashboard'
+    | '/library'
+    | '/c/$username'
+    | '/dashboard/products'
+    | '/p/$username/$slug'
+    | '/dashboard/products/new'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/become-creator'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/library'
+    | '/c/$username'
+    | '/_authenticated/dashboard/products'
+    | '/p/$username/$slug'
+    | '/_authenticated/dashboard/products/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  CUsernameRoute: typeof CUsernameRoute
+  PUsernameSlugRoute: typeof PUsernameSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +176,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/c/$username': {
+      id: '/c/$username'
+      path: '/c/$username'
+      fullPath: '/c/$username'
+      preLoaderRoute: typeof CUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/become-creator': {
+      id: '/_authenticated/become-creator'
+      path: '/become-creator'
+      fullPath: '/become-creator'
+      preLoaderRoute: typeof AuthenticatedBecomeCreatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/p/$username/$slug': {
+      id: '/p/$username/$slug'
+      path: '/p/$username/$slug'
+      fullPath: '/p/$username/$slug'
+      preLoaderRoute: typeof PUsernameSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard/products': {
+      id: '/_authenticated/dashboard/products'
+      path: '/products'
+      fullPath: '/dashboard/products'
+      preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/products/new': {
+      id: '/_authenticated/dashboard/products/new'
+      path: '/new'
+      fullPath: '/dashboard/products/new'
+      preLoaderRoute: typeof AuthenticatedDashboardProductsNewRouteImport
+      parentRoute: typeof AuthenticatedDashboardProductsRoute
+    }
   }
 }
 
+interface AuthenticatedDashboardProductsRouteChildren {
+  AuthenticatedDashboardProductsNewRoute: typeof AuthenticatedDashboardProductsNewRoute
+}
+
+const AuthenticatedDashboardProductsRouteChildren: AuthenticatedDashboardProductsRouteChildren =
+  {
+    AuthenticatedDashboardProductsNewRoute:
+      AuthenticatedDashboardProductsNewRoute,
+  }
+
+const AuthenticatedDashboardProductsRouteWithChildren =
+  AuthenticatedDashboardProductsRoute._addFileChildren(
+    AuthenticatedDashboardProductsRouteChildren,
+  )
+
+interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRouteWithChildren
+}
+
+const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
+  {
+    AuthenticatedDashboardProductsRoute:
+      AuthenticatedDashboardProductsRouteWithChildren,
+  }
+
+const AuthenticatedDashboardRouteWithChildren =
+  AuthenticatedDashboardRoute._addFileChildren(
+    AuthenticatedDashboardRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBecomeCreatorRoute: typeof AuthenticatedBecomeCreatorRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRouteWithChildren
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBecomeCreatorRoute: AuthenticatedBecomeCreatorRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRouteWithChildren,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  CUsernameRoute: CUsernameRoute,
+  PUsernameSlugRoute: PUsernameSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
