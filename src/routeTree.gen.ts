@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,6 +21,11 @@ import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
 import { Route as AuthenticatedDashboardProductsNewRouteImport } from './routes/_authenticated/dashboard.products.new'
 
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -76,6 +82,7 @@ const AuthenticatedDashboardProductsNewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/explore': typeof ExploreRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/library': typeof AuthenticatedLibraryRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/explore': typeof ExploreRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/library': typeof AuthenticatedLibraryRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/explore': typeof ExploreRoute
   '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/explore'
     | '/become-creator'
     | '/dashboard'
     | '/library'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/explore'
     | '/become-creator'
     | '/dashboard'
     | '/library'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/explore'
     | '/_authenticated/become-creator'
     | '/_authenticated/dashboard'
     | '/_authenticated/library'
@@ -149,12 +161,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ExploreRoute: typeof ExploreRoute
   CUsernameRoute: typeof CUsernameRoute
   PUsernameSlugRoute: typeof PUsernameSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -277,19 +297,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ExploreRoute: ExploreRoute,
   CUsernameRoute: CUsernameRoute,
   PUsernameSlugRoute: PUsernameSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

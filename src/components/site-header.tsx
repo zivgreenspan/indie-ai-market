@@ -44,6 +44,13 @@ export function SiteHeader() {
           >
             Discover
           </Link>
+          <Link
+            to="/explore"
+            className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface" }}
+          >
+            Explore
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
