@@ -63,6 +63,7 @@ function NewProductPage() {
       const slug = slugify(form.title);
       if (!slug) throw new Error("Title must contain letters or numbers");
 
+      const isGithub = form.hosting_method === "github";
       const { error } = await supabase.from("products").insert({
         creator_id: user.id,
         slug,
@@ -74,10 +75,13 @@ function NewProductPage() {
         price_cents: priceCents,
         currency: "usd",
         pricing_model: form.pricing_model,
-        github_repo_url: form.github_repo_url || null,
+        hosted_app_url: isGithub ? null : form.hosted_app_url.trim(),
+        github_repo_url: isGithub ? form.github_repo_url.trim() : null,
+        deployment_status: isGithub ? "pending" : "none",
         status: form.status,
         published_at: form.status === "published" ? new Date().toISOString() : null,
       });
+
       if (error) throw error;
       toast.success("Product created");
       navigate({ to: "/dashboard/products" });
