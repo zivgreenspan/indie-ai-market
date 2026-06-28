@@ -93,8 +93,12 @@ function AuthPage() {
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-20 left-1/3 size-[420px] rounded-full bg-primary/15 blur-[120px]" />
         </div>
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-          <span className="inline-block size-2.5 rounded-sm bg-primary" /> river
+        <Link
+          to="/"
+          className="font-display text-2xl font-medium lowercase text-foreground"
+          style={{ letterSpacing: "-0.04em" }}
+        >
+          river
         </Link>
         <div className="space-y-4">
           <p className="font-display text-3xl font-semibold leading-tight">
