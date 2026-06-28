@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Stak — the marketplace for AI-built software" },
+      { title: "River — the marketplace for AI-built software" },
       {
         name: "description",
         content:
@@ -75,7 +75,7 @@ function Home() {
               you actually <span className="text-primary">trust</span>.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              Stak is where indie builders ship the software they made with AI — and where you find the
+              River is where indie builders ship the software they made with AI — and where you find the
               good stuff, follow the makers behind it, and pay them directly.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -85,7 +85,7 @@ function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/become-creator">Sell on Stak</Link>
+                <Link to="/become-creator">Sell on River</Link>
               </Button>
             </div>
 
@@ -101,7 +101,7 @@ function Home() {
       <section className="container-page py-12 md:py-16">
         <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
           <div>
-            <h2 className="font-display text-2xl font-semibold md:text-3xl">Fresh on Stak</h2>
+            <h2 className="font-display text-2xl font-semibold md:text-3xl">Fresh on River</h2>
             <p className="mt-1 text-sm text-muted-foreground">The latest software shipped by creators.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -135,7 +135,7 @@ function Home() {
 
       <footer className="mt-12 border-t border-border">
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-8 text-xs text-muted-foreground">
-          <div className="font-mono uppercase tracking-wider">stak · {new Date().getFullYear()}</div>
+          <div className="font-mono uppercase tracking-wider">river · {new Date().getFullYear()}</div>
           <div>Built for creators. Powered by Stripe Connect.</div>
         </div>
       </footer>
@@ -157,7 +157,7 @@ function EmptyDiscover() {
     <div className="rounded-3xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
       <h3 className="font-display text-2xl font-semibold">Nothing here yet</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Stak is brand new. The first products are landing soon — or you could be one of them.
+        River is brand new. The first products are landing soon — or you could be one of them.
       </p>
       <Button asChild className="mt-6">
         <Link to="/become-creator">Be one of the first creators</Link>

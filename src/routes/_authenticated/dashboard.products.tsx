@@ -9,7 +9,7 @@ import { categoryLabel } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard/products")({
-  head: () => ({ meta: [{ title: "Products · Stak" }] }),
+  head: () => ({ meta: [{ title: "Products · River" }] }),
   component: ProductsList,
 });
 
@@ -36,7 +36,7 @@ function ProductsList() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-semibold">Products</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Everything you've shipped on Stak.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Everything you've shipped on River.</p>
         </div>
         <Button asChild>
           <Link to="/dashboard/products/new">

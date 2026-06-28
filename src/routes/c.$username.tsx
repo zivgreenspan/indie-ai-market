@@ -13,9 +13,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/c/$username")({
   head: ({ params }) => ({
     meta: [
-      { title: `@${params.username} · Stak` },
-      { name: "description", content: `Products and updates from @${params.username} on Stak.` },
-      { property: "og:title", content: `@${params.username} on Stak` },
+      { title: `@${params.username} · River` },
+      { name: "description", content: `Products and updates from @${params.username} on River.` },
+      { property: "og:title", content: `@${params.username} on River` },
     ],
   }),
   component: CreatorPage,

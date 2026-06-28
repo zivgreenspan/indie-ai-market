@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { becomeCreator } from "@/lib/become-creator.functions";
 
 export const Route = createFileRoute("/_authenticated/become-creator")({
-  head: () => ({ meta: [{ title: "Become a creator · Stak" }] }),
+  head: () => ({ meta: [{ title: "Become a creator · River" }] }),
   component: BecomeCreatorPage,
 });
 

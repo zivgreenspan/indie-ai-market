@@ -31,7 +31,7 @@ export function SiteHeader() {
       <div className="container-page flex h-14 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
           <span className="inline-block size-2.5 rounded-sm bg-primary" />
-          stak
+          river
           <span className="text-muted-foreground font-sans text-xs font-normal">/ marketplace</span>
         </Link>
 
