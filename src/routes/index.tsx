@@ -80,7 +80,7 @@ function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="font-medium">
-                <Link to="/auth" search={{ mode: "signup" }}>
+                <Link to="/explore">
                   Start exploring <ArrowRight className="ml-1 size-4" />
                 </Link>
               </Button>
@@ -91,7 +91,7 @@ function Home() {
 
             <dl className="mt-12 grid grid-cols-2 gap-x-8 gap-y-4 text-sm md:grid-cols-3">
               <Feature icon={<Zap className="size-4 text-primary" />} label="90% to creators" />
-              <Feature icon={<ShieldCheck className="size-4 text-primary" />} label="Stripe-secured payouts" />
+              <Feature icon={<ShieldCheck className="size-4 text-primary" />} label="Tax & VAT handled globally" />
               <Feature icon={<Sparkles className="size-4 text-primary" />} label="Curated, not algorithmic" />
             </dl>
           </div>
