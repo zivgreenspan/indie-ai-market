@@ -19,7 +19,7 @@ import { CATEGORIES, type CategoryValue } from "@/lib/categories";
 import { slugify } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard/products/new")({
-  head: () => ({ meta: [{ title: "New product · Stak" }] }),
+  head: () => ({ meta: [{ title: "New product · River" }] }),
   component: NewProductPage,
 });
 

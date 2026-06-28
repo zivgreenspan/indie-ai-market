@@ -13,8 +13,8 @@ import { useSession } from "@/hooks/use-auth";
 export const Route = createFileRoute("/p/$username/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} by @${params.username} · Stak` },
-      { name: "description", content: `A product by @${params.username} on Stak.` },
+      { title: `${params.slug} by @${params.username} · River` },
+      { name: "description", content: `A product by @${params.username} on River.` },
       { property: "og:title", content: `${params.slug} by @${params.username}` },
       { property: "og:type", content: "website" },
     ],

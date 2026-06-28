@@ -29,10 +29,12 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container-page flex h-14 items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
-          <span className="inline-block size-2.5 rounded-sm bg-primary" />
-          stak
-          <span className="text-muted-foreground font-sans text-xs font-normal">/ marketplace</span>
+        <Link
+          to="/"
+          className="font-display text-2xl font-medium lowercase text-foreground"
+          style={{ letterSpacing: "-0.04em" }}
+        >
+          river
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

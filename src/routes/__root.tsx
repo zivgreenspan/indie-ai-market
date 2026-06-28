@@ -73,14 +73,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Stak — the creator marketplace for AI-built software" },
+      { title: "River — the creator marketplace for AI-built software" },
       {
         name: "description",
         content:
           "Discover, follow and buy software built by independent creators using AI. A curated marketplace for vibe-coders and indie builders.",
       },
-      { name: "author", content: "Stak" },
-      { property: "og:title", content: "Stak — the creator marketplace for AI-built software" },
+      { name: "author", content: "River" },
+      { property: "og:title", content: "River — the creator marketplace for AI-built software" },
       {
         property: "og:description",
         content: "Discover and buy software made by creators you trust.",

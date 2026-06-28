@@ -8,7 +8,7 @@ import { useSession } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Creator dashboard · Stak" }] }),
+  head: () => ({ meta: [{ title: "Creator dashboard · River" }] }),
   component: Dashboard,
 });
 
@@ -63,7 +63,7 @@ function Dashboard() {
             <div>
               <p className="font-medium">Connect Stripe to start selling</p>
               <p className="text-sm text-muted-foreground">
-                Payouts land directly in your bank. Stak takes a 10% platform fee. Nothing else.
+                Payouts land directly in your bank. River takes a 10% platform fee. Nothing else.
               </p>
             </div>
           </div>

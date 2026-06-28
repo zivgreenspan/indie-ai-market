@@ -12,8 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/explore")({
   head: () => ({
     meta: [
-      { title: "Explore · Stak" },
-      { name: "description", content: "Browse every app and tool published by creators on Stak." },
+      { title: "Explore · River" },
+      { name: "description", content: "Browse every app and tool published by creators on River." },
     ],
   }),
   component: Explore,
@@ -60,7 +60,7 @@ function Explore() {
           <div>
             <h1 className="font-display text-4xl font-semibold tracking-tight">Explore</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Every product live on Stak right now.
+              Every product live on River right now.
             </p>
           </div>
           <div className="relative w-full max-w-xs">

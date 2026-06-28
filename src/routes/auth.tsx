@@ -18,8 +18,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
-      { title: "Sign in · Stak" },
-      { name: "description", content: "Sign in or create your Stak account." },
+      { title: "Sign in · River" },
+      { name: "description", content: "Sign in or create your River account." },
     ],
   }),
   component: AuthPage,
@@ -93,8 +93,12 @@ function AuthPage() {
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -top-20 left-1/3 size-[420px] rounded-full bg-primary/15 blur-[120px]" />
         </div>
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold">
-          <span className="inline-block size-2.5 rounded-sm bg-primary" /> stak
+        <Link
+          to="/"
+          className="font-display text-2xl font-medium lowercase text-foreground"
+          style={{ letterSpacing: "-0.04em" }}
+        >
+          river
         </Link>
         <div className="space-y-4">
           <p className="font-display text-3xl font-semibold leading-tight">
@@ -104,7 +108,7 @@ function AuthPage() {
             — A creator we made up so you'd take us seriously
           </p>
         </div>
-        <div className="text-xs text-muted-foreground">© Stak · 2026</div>
+        <div className="text-xs text-muted-foreground">© River · 2026</div>
       </aside>
 
       <main className="flex items-center justify-center px-6 py-12">
@@ -188,7 +192,7 @@ function AuthPage() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "signup" ? "Already have an account?" : "New to Stak?"}{" "}
+            {mode === "signup" ? "Already have an account?" : "New to River?"}{" "}
             <button
               type="button"
               onClick={() => setMode(mode === "signup" ? "signin" : "signup")}

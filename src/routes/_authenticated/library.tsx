@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/library")({
-  head: () => ({ meta: [{ title: "Your library · Stak" }] }),
+  head: () => ({ meta: [{ title: "Your library · River" }] }),
   component: Library,
 });
 
