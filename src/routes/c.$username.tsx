@@ -49,7 +49,7 @@ function CreatorPage() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, username, display_name, avatar_url, bio, creator_profiles(tagline, long_bio, website, x_handle, github_handle, stripe_charges_enabled)",
+          "id, username, display_name, avatar_url, bio, creator_profiles(tagline, long_bio, website, x_handle, github_handle)",
         )
         .eq("username", username)
         .maybeSingle();

@@ -54,7 +54,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {!stripeReady && (
+      {!payoutsReady && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/15 p-2 text-primary">
