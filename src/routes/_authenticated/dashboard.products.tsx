@@ -121,3 +121,25 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
+
+function DeploymentPill({ status }: { status: string }) {
+  if (!status || status === "none") {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const map: Record<string, string> = {
+    pending: "bg-accent/15 text-accent",
+    deploying: "bg-primary/15 text-primary",
+    live: "bg-success/15 text-success",
+    failed: "bg-destructive/15 text-destructive",
+  };
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 font-mono text-xs uppercase tracking-wide ${
+        map[status] ?? "bg-surface-2 text-muted-foreground"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
