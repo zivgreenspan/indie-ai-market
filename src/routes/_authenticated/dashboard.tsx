@@ -33,7 +33,7 @@ function Dashboard() {
     },
   });
 
-  const stripeReady = overview?.creator?.stripe_charges_enabled;
+  const payoutsReady = false;
   const products = overview?.products ?? [];
   const published = products.filter((p) => p.status === "published").length;
 
