@@ -356,6 +356,7 @@ export type Database = {
           created_at: string
           creator_id: string
           currency: string
+          deployment_status: Database["public"]["Enums"]["deployment_status"]
           description: string | null
           gallery: string[]
           github_repo_url: string | null
@@ -379,6 +380,7 @@ export type Database = {
           created_at?: string
           creator_id: string
           currency?: string
+          deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
           gallery?: string[]
           github_repo_url?: string | null
@@ -402,6 +404,7 @@ export type Database = {
           created_at?: string
           creator_id?: string
           currency?: string
+          deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
           gallery?: string[]
           github_repo_url?: string | null
@@ -657,6 +660,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
+      deployment_status: "none" | "pending" | "deploying" | "live" | "failed"
       earning_status: "pending" | "available" | "paid" | "reversed"
       payout_method: "paypal" | "wise" | "bank"
       payout_status: "pending" | "processing" | "paid" | "failed"
@@ -800,6 +804,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
+      deployment_status: ["none", "pending", "deploying", "live", "failed"],
       earning_status: ["pending", "available", "paid", "reversed"],
       payout_method: ["paypal", "wise", "bank"],
       payout_status: ["pending", "processing", "paid", "failed"],
