@@ -66,12 +66,98 @@ export type Database = {
           },
         ]
       }
+      creator_earnings: {
+        Row: {
+          available_at: string
+          created_at: string
+          creator_id: string
+          currency: string
+          gross_cents: number
+          id: string
+          net_cents: number
+          notes: string | null
+          payout_id: string | null
+          platform_fee_cents: number
+          processor_fee_cents: number
+          product_id: string
+          purchase_id: string
+          status: Database["public"]["Enums"]["earning_status"]
+          updated_at: string
+        }
+        Insert: {
+          available_at: string
+          created_at?: string
+          creator_id: string
+          currency?: string
+          gross_cents: number
+          id?: string
+          net_cents: number
+          notes?: string | null
+          payout_id?: string | null
+          platform_fee_cents: number
+          processor_fee_cents?: number
+          product_id: string
+          purchase_id: string
+          status?: Database["public"]["Enums"]["earning_status"]
+          updated_at?: string
+        }
+        Update: {
+          available_at?: string
+          created_at?: string
+          creator_id?: string
+          currency?: string
+          gross_cents?: number
+          id?: string
+          net_cents?: number
+          notes?: string | null
+          payout_id?: string | null
+          platform_fee_cents?: number
+          processor_fee_cents?: number
+          product_id?: string
+          purchase_id?: string
+          status?: Database["public"]["Enums"]["earning_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_earnings_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_earnings_payout_fk"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_earnings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_earnings_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: true
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_profiles: {
         Row: {
           created_at: string
           github_handle: string | null
           long_bio: string | null
           onboarded_at: string | null
+          payout_details: Json
+          payout_email: string | null
+          payout_method: Database["public"]["Enums"]["payout_method"] | null
           tagline: string | null
           updated_at: string
           user_id: string
@@ -83,6 +169,9 @@ export type Database = {
           github_handle?: string | null
           long_bio?: string | null
           onboarded_at?: string | null
+          payout_details?: Json
+          payout_email?: string | null
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
           tagline?: string | null
           updated_at?: string
           user_id: string
@@ -94,6 +183,9 @@ export type Database = {
           github_handle?: string | null
           long_bio?: string | null
           onboarded_at?: string | null
+          payout_details?: Json
+          payout_email?: string | null
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
           tagline?: string | null
           updated_at?: string
           user_id?: string
@@ -198,6 +290,65 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          creator_id: string
+          currency: string
+          destination: string
+          id: string
+          method: Database["public"]["Enums"]["payout_method"]
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          processed_at: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["payout_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          creator_id: string
+          currency?: string
+          destination: string
+          id?: string
+          method: Database["public"]["Enums"]["payout_method"]
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          creator_id?: string
+          currency?: string
+          destination?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payout_method"]
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          processed_at?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: Database["public"]["Enums"]["product_category"]
@@ -210,13 +361,13 @@ export type Database = {
           github_repo_url: string | null
           hosted_app_url: string | null
           id: string
+          lemon_squeezy_product_id: string | null
+          lemon_squeezy_variant_id: string | null
           price_cents: number
           pricing_model: Database["public"]["Enums"]["pricing_model"]
           published_at: string | null
           slug: string
           status: Database["public"]["Enums"]["product_status"]
-          stripe_price_id: string | null
-          stripe_product_id: string | null
           tagline: string | null
           tags: string[]
           title: string
@@ -233,13 +384,13 @@ export type Database = {
           github_repo_url?: string | null
           hosted_app_url?: string | null
           id?: string
+          lemon_squeezy_product_id?: string | null
+          lemon_squeezy_variant_id?: string | null
           price_cents: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
           published_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["product_status"]
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           tagline?: string | null
           tags?: string[]
           title: string
@@ -256,13 +407,13 @@ export type Database = {
           github_repo_url?: string | null
           hosted_app_url?: string | null
           id?: string
+          lemon_squeezy_product_id?: string | null
+          lemon_squeezy_variant_id?: string | null
           price_cents?: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
           published_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["product_status"]
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           tagline?: string | null
           tags?: string[]
           title?: string
@@ -315,12 +466,14 @@ export type Database = {
           currency: string
           current_period_end: string | null
           id: string
+          lemon_squeezy_customer_id: string | null
+          lemon_squeezy_order_id: string | null
+          lemon_squeezy_order_item_id: string | null
           platform_fee_cents: number
           product_id: string
           status: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id: string | null
-          stripe_payment_intent_id: string | null
-          stripe_subscription_id: string | null
+          subtotal_cents: number
+          tax_cents: number
           updated_at: string
           user_id: string
         }
@@ -330,12 +483,14 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           id?: string
+          lemon_squeezy_customer_id?: string | null
+          lemon_squeezy_order_id?: string | null
+          lemon_squeezy_order_item_id?: string | null
           platform_fee_cents?: number
           product_id: string
           status?: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_subscription_id?: string | null
+          subtotal_cents?: number
+          tax_cents?: number
           updated_at?: string
           user_id: string
         }
@@ -345,12 +500,14 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           id?: string
+          lemon_squeezy_customer_id?: string | null
+          lemon_squeezy_order_id?: string | null
+          lemon_squeezy_order_item_id?: string | null
           platform_fee_cents?: number
           product_id?: string
           status?: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_subscription_id?: string | null
+          subtotal_cents?: number
+          tax_cents?: number
           updated_at?: string
           user_id?: string
         }
@@ -500,6 +657,9 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
+      earning_status: "pending" | "available" | "paid" | "reversed"
+      payout_method: "paypal" | "wise" | "bank"
+      payout_status: "pending" | "processing" | "paid" | "failed"
       pricing_model: "one_time" | "subscription"
       product_category:
         | "productivity"
@@ -640,6 +800,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
+      earning_status: ["pending", "available", "paid", "reversed"],
+      payout_method: ["paypal", "wise", "bank"],
+      payout_status: ["pending", "processing", "paid", "failed"],
       pricing_model: ["one_time", "subscription"],
       product_category: [
         "productivity",
