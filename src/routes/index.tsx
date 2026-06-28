@@ -136,7 +136,7 @@ function Home() {
       <footer className="mt-12 border-t border-border">
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-8 text-xs text-muted-foreground">
           <div className="font-mono uppercase tracking-wider">river · {new Date().getFullYear()}</div>
-          <div>Built for creators. Powered by Stripe Connect.</div>
+          <div>Built for creators. Made for the world.</div>
         </div>
       </footer>
     </div>
