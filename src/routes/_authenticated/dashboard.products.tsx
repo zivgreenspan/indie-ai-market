@@ -64,6 +64,7 @@ function ProductsList() {
                 <th className="px-4 py-3 text-left font-medium">Category</th>
                 <th className="px-4 py-3 text-left font-medium">Price</th>
                 <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left font-medium">Deployment</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -78,6 +79,10 @@ function ProductsList() {
                   <td className="px-4 py-3">
                     <StatusPill status={p.status} />
                   </td>
+                  <td className="px-4 py-3">
+                    <DeploymentPill status={p.deployment_status} />
+                  </td>
+
                   <td className="px-4 py-3 text-right">
                     {p.status === "published" && profile && (
                       <Link
