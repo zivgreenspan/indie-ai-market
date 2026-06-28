@@ -35,13 +35,28 @@ function NewProductPage() {
     category: "productivity" as CategoryValue,
     price: "9",
     pricing_model: "one_time" as "one_time" | "subscription",
+    hosting_method: "url" as "url" | "github",
+    hosted_app_url: "",
     github_repo_url: "",
     status: "draft" as "draft" | "published",
   });
 
+  const githubRegex = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
+
+    if (form.hosting_method === "github" && !githubRegex.test(form.github_repo_url.trim())) {
+      toast.error("Enter a valid public GitHub repo URL (https://github.com/user/repo)");
+      return;
+    }
+    if (form.hosting_method === "url" && !form.hosted_app_url.trim()) {
+      toast.error("Enter your hosted app URL");
+      return;
+    }
+
+
     setBusy(true);
     try {
       const priceCents = Math.round(parseFloat(form.price || "0") * 100);
