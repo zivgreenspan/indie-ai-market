@@ -205,18 +205,65 @@ function NewProductPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>GitHub repository (optional)</Label>
-            <Input
-              type="url"
-              value={form.github_repo_url}
-              onChange={(e) => setForm({ ...form, github_repo_url: e.target.value })}
-              placeholder="https://github.com/you/repo"
-            />
-            <p className="text-xs text-muted-foreground">
-              We'll auto-deploy your repo in a future release. For now this is just for show.
-            </p>
+          <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-4">
+            <Label>How is your app hosted?</Label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, hosting_method: "url" })}
+                className={`rounded-lg border p-3 text-left text-sm transition ${
+                  form.hosting_method === "url"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div className="font-medium">I have a hosted URL</div>
+                <div className="text-xs text-muted-foreground">Already deployed somewhere.</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, hosting_method: "github" })}
+                className={`rounded-lg border p-3 text-left text-sm transition ${
+                  form.hosting_method === "github"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div className="font-medium">Upload via GitHub repo</div>
+                <div className="text-xs text-muted-foreground">We'll deploy it for you.</div>
+              </button>
+            </div>
+
+            {form.hosting_method === "url" ? (
+              <div className="space-y-2 pt-2">
+                <Label>Hosted app URL</Label>
+                <Input
+                  type="url"
+                  required
+                  value={form.hosted_app_url}
+                  onChange={(e) => setForm({ ...form, hosted_app_url: e.target.value })}
+                  placeholder="https://yourapp.com"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2 pt-2">
+                <Label>GitHub repository URL</Label>
+                <Input
+                  type="url"
+                  required
+                  value={form.github_repo_url}
+                  onChange={(e) => setForm({ ...form, github_repo_url: e.target.value })}
+                  placeholder="https://github.com/username/repo"
+                />
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  <li>• Currently supports Next.js projects only.</li>
+                  <li>• Repo must be public for now.</li>
+                  <li>• Deployment will be queued and handled by our team.</li>
+                </ul>
+              </div>
+            )}
           </div>
+
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={() => navigate({ to: "/dashboard/products" })}>
