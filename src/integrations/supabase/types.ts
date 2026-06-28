@@ -72,9 +72,6 @@ export type Database = {
           github_handle: string | null
           long_bio: string | null
           onboarded_at: string | null
-          stripe_account_id: string | null
-          stripe_charges_enabled: boolean
-          stripe_payouts_enabled: boolean
           tagline: string | null
           updated_at: string
           user_id: string
@@ -86,9 +83,6 @@ export type Database = {
           github_handle?: string | null
           long_bio?: string | null
           onboarded_at?: string | null
-          stripe_account_id?: string | null
-          stripe_charges_enabled?: boolean
-          stripe_payouts_enabled?: boolean
           tagline?: string | null
           updated_at?: string
           user_id: string
@@ -100,9 +94,6 @@ export type Database = {
           github_handle?: string | null
           long_bio?: string | null
           onboarded_at?: string | null
-          stripe_account_id?: string | null
-          stripe_charges_enabled?: boolean
-          stripe_payouts_enabled?: boolean
           tagline?: string | null
           updated_at?: string
           user_id?: string
