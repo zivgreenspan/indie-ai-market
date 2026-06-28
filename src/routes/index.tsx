@@ -11,11 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "River — the marketplace for AI-built software" },
+      { title: "River — THE MARKETPLACE FOR SOFTWARE" },
       {
         name: "description",
         content:
-          "Discover apps and tools built by independent creators with AI. Follow makers, buy directly, and keep 90% with creators.",
+          "Discover apps and tools built by independent creators. Follow makers, buy directly, and keep 90% with creators.",
       },
     ],
   }),
@@ -67,7 +67,7 @@ function Home() {
         <div className="container-page py-20 md:py-28">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              <Sparkles className="size-3 text-primary" /> The marketplace for AI-built software
+              <Sparkles className="size-3 text-primary" /> THE MARKETPLACE FOR SOFTWARE
             </span>
             <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight md:text-7xl">
               Apps from creators
@@ -75,7 +75,7 @@ function Home() {
               you actually <span className="text-primary">trust</span>.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              River is where indie builders ship the software they made with AI — and where you find the
+              River is where indie builders ship the software they made — and where you find the
               good stuff, follow the makers behind it, and pay them directly.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -85,7 +85,7 @@ function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/become-creator">Sell on River</Link>
+                <Link to="/become-creator">Become a creator</Link>
               </Button>
             </div>
 
