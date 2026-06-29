@@ -14,7 +14,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CUsernameRouteImport } from './routes/c.$username'
-import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
@@ -44,11 +43,6 @@ const CUsernameRoute = CUsernameRouteImport.update({
   id: '/c/$username',
   path: '/c/$username',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -85,7 +79,6 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
-  '/library': typeof AuthenticatedLibraryRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -97,7 +90,6 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
-  '/library': typeof AuthenticatedLibraryRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -111,7 +103,6 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
-  '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/c/$username': typeof CUsernameRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -125,7 +116,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/become-creator'
     | '/dashboard'
-    | '/library'
     | '/c/$username'
     | '/dashboard/products'
     | '/p/$username/$slug'
@@ -137,7 +127,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/become-creator'
     | '/dashboard'
-    | '/library'
     | '/c/$username'
     | '/dashboard/products'
     | '/p/$username/$slug'
@@ -150,7 +139,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/_authenticated/become-creator'
     | '/_authenticated/dashboard'
-    | '/_authenticated/library'
     | '/c/$username'
     | '/_authenticated/dashboard/products'
     | '/p/$username/$slug'
@@ -202,13 +190,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$username'
       preLoaderRoute: typeof CUsernameRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/library': {
-      id: '/_authenticated/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -281,13 +262,11 @@ const AuthenticatedDashboardRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBecomeCreatorRoute: typeof AuthenticatedBecomeCreatorRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRouteWithChildren
-  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBecomeCreatorRoute: AuthenticatedBecomeCreatorRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRouteWithChildren,
-  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
