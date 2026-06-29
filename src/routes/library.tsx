@@ -1,19 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Library as LibraryIcon } from "lucide-react";
+import { Library as LibraryIcon, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { ProductCard, type ProductCardData } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/library")({
+export const Route = createFileRoute("/library")({
   head: () => ({ meta: [{ title: "Your library · River" }] }),
-  component: Library,
+  component: LibraryPage,
 });
 
-function Library() {
-  const { user } = useSession();
+function LibraryPage() {
+  const { user, loading: sessionLoading } = useSession();
 
   const { data: items, isLoading } = useQuery({
     enabled: !!user,
@@ -45,7 +45,12 @@ function Library() {
         </div>
       </div>
 
-      {isLoading ? (
+      {!user && !sessionLoading ? (
+        <SignInPrompt
+          title="Sign in to view your library"
+          description="Your purchases and active entitlements live here."
+        />
+      ) : isLoading || sessionLoading ? (
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-72 rounded-2xl bg-surface" />
@@ -58,7 +63,7 @@ function Library() {
             Browse what creators are shipping right now.
           </p>
           <Button asChild className="mt-6">
-            <Link to="/">Discover products</Link>
+            <Link to="/explore">Discover products</Link>
           </Button>
         </div>
       ) : (
@@ -69,5 +74,27 @@ function Library() {
         </div>
       )}
     </main>
+  );
+}
+
+function SignInPrompt({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mt-10 rounded-2xl border border-dashed border-border bg-surface/30 p-12 text-center">
+      <div className="mx-auto inline-flex size-10 items-center justify-center rounded-full bg-surface text-muted-foreground">
+        <Lock className="size-5" />
+      </div>
+      <p className="mt-4 font-display text-2xl">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <Button asChild>
+          <Link to="/auth">Sign in</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/auth" search={{ mode: "signup" }}>
+            Create account
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }

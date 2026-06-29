@@ -44,7 +44,7 @@ export function SiteHeader() {
             activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface" }}
             activeOptions={{ exact: true }}
           >
-            Discover
+            Home
           </Link>
           <Link
             to="/explore"
@@ -52,6 +52,20 @@ export function SiteHeader() {
             activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface" }}
           >
             Explore
+          </Link>
+          <Link
+            to="/my-creators"
+            className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface" }}
+          >
+            My Creators
+          </Link>
+          <Link
+            to="/library"
+            className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface" }}
+          >
+            Library
           </Link>
         </nav>
 
