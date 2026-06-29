@@ -13,7 +13,7 @@ export const Route = createFileRoute("/library")({
 });
 
 function LibraryPage() {
-  const { user, isLoading: sessionLoading } = useSession();
+  const { user, loading: sessionLoading } = useSession();
 
   const { data: items, isLoading } = useQuery({
     enabled: !!user,
