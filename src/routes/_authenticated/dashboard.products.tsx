@@ -73,7 +73,7 @@ function ProductsList() {
                 <tr key={p.id} className="hover:bg-surface/40">
                   <td className="px-4 py-3 font-medium">{p.title}</td>
                   <td className="px-4 py-3 text-muted-foreground">{categoryLabel(p.category)}</td>
-                  <td className="px-4 py-3 font-mono">
+                  <td className="px-4 py-3 font-mono text-accent">
                     {formatPrice(p.price_cents, p.currency, p.pricing_model)}
                   </td>
                   <td className="px-4 py-3">

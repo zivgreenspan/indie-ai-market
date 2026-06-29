@@ -180,7 +180,7 @@ function ProductPage() {
 
           <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
             <div className="rounded-2xl border border-border bg-card p-6">
-              <p className="font-mono text-3xl font-semibold">
+              <p className="font-mono text-3xl font-semibold text-accent">
                 {formatPrice(product.price_cents, product.currency, product.pricing_model)}
               </p>
               <p className="text-xs text-muted-foreground">

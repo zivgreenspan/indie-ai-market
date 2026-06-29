@@ -122,7 +122,7 @@ function Dashboard() {
                   <p className="font-medium">{p.title}</p>
                   <p className="text-xs text-muted-foreground">
                     <span className="font-mono uppercase tracking-wide">{p.status}</span> ·{" "}
-                    {formatPrice(p.price_cents, p.currency, p.pricing_model)}
+                    <span className="text-accent">{formatPrice(p.price_cents, p.currency, p.pricing_model)}</span>
                   </p>
                 </div>
               </li>
