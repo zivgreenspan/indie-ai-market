@@ -46,7 +46,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <span className="rounded-full bg-surface-2 px-2 py-0.5 font-mono uppercase tracking-wide text-muted-foreground">
             {categoryLabel(product.category)}
           </span>
-          <span className="font-mono text-foreground">
+          <span className="font-mono text-foreground text-accent">
             {formatPrice(product.price_cents, product.currency, product.pricing_model)}
           </span>
         </div>
