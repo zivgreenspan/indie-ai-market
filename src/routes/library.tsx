@@ -35,6 +35,8 @@ function LibraryPage() {
   });
 
   return (
+    <>
+    <SiteHeader />
     <main className="container-page py-10">
       <div className="flex items-center gap-3">
         <div className="rounded-lg bg-surface p-2 text-muted-foreground">
