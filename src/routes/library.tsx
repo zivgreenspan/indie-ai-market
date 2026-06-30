@@ -77,6 +77,7 @@ function LibraryPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 
