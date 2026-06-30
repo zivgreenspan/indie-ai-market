@@ -26,6 +26,7 @@ async function fetchAll(): Promise<ProductCardData[]> {
       "id, slug, title, tagline, cover_image_url, category, price_cents, currency, pricing_model, creator:profiles!products_creator_id_fkey(username, display_name, avatar_url)",
     )
     .eq("status", "published")
+    .order("featured", { ascending: false })
     .order("published_at", { ascending: false });
   if (error) throw error;
   return (data ?? [])
