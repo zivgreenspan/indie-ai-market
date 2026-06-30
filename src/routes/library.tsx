@@ -6,6 +6,7 @@ import { useSession } from "@/hooks/use-auth";
 import { ProductCard, type ProductCardData } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { SiteHeader } from "@/components/site-header";
 
 export const Route = createFileRoute("/library")({
   head: () => ({ meta: [{ title: "Your library · River" }] }),
@@ -34,6 +35,8 @@ function LibraryPage() {
   });
 
   return (
+    <>
+    <SiteHeader />
     <main className="container-page py-10">
       <div className="flex items-center gap-3">
         <div className="rounded-lg bg-surface p-2 text-muted-foreground">
@@ -74,6 +77,7 @@ function LibraryPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 

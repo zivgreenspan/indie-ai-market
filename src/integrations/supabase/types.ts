@@ -153,6 +153,7 @@ export type Database = {
         Row: {
           created_at: string
           github_handle: string | null
+          is_suspended: boolean
           long_bio: string | null
           onboarded_at: string | null
           payout_details: Json
@@ -167,6 +168,7 @@ export type Database = {
         Insert: {
           created_at?: string
           github_handle?: string | null
+          is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
           payout_details?: Json
@@ -181,6 +183,7 @@ export type Database = {
         Update: {
           created_at?: string
           github_handle?: string | null
+          is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
           payout_details?: Json
@@ -358,6 +361,7 @@ export type Database = {
           currency: string
           deployment_status: Database["public"]["Enums"]["deployment_status"]
           description: string | null
+          featured: boolean
           gallery: string[]
           github_repo_url: string | null
           hosted_app_url: string | null
@@ -382,6 +386,7 @@ export type Database = {
           currency?: string
           deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
+          featured?: boolean
           gallery?: string[]
           github_repo_url?: string | null
           hosted_app_url?: string | null
@@ -406,6 +411,7 @@ export type Database = {
           currency?: string
           deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
+          featured?: boolean
           gallery?: string[]
           github_repo_url?: string | null
           hosted_app_url?: string | null
