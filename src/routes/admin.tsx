@@ -380,7 +380,7 @@ function ProductsSection() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: { featured?: boolean; status?: "draft" | "published" | "unlisted" | "removed" } }) => {
       const { error } = await supabase.from("products").update(patch).eq("id", id);
       if (error) throw error;
     },
