@@ -6,6 +6,7 @@ import { useSession } from "@/hooks/use-auth";
 import { ProductCard, type ProductCardData } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { SiteHeader } from "@/components/site-header";
 
 export const Route = createFileRoute("/library")({
   head: () => ({ meta: [{ title: "Your library · River" }] }),
