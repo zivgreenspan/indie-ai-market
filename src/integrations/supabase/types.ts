@@ -670,10 +670,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_entitlement: {
-        Args: { _product_id: string; _user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
