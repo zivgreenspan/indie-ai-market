@@ -598,9 +598,10 @@ function UsersSection() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: async () => {
-      const [{ data: profiles, error }, { data: roles }] = await Promise.all([
+      const [{ data: profiles, error }, { data: roles }, { data: subs }] = await Promise.all([
         supabase.from("profiles").select("id, username, display_name, created_at").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
+        supabase.from("creator_subscriptions").select("user_id, tier"),
       ]);
       if (error) throw error;
       const rolesByUser = new Map<string, string[]>();
@@ -609,7 +610,13 @@ function UsersSection() {
         arr.push(r.role);
         rolesByUser.set(r.user_id, arr);
       });
-      return (profiles ?? []).map((p) => ({ ...p, roles: rolesByUser.get(p.id) ?? [] }));
+      const tierByUser = new Map<string, string>();
+      (subs ?? []).forEach((s) => tierByUser.set(s.user_id, s.tier));
+      return (profiles ?? []).map((p) => ({
+        ...p,
+        roles: rolesByUser.get(p.id) ?? [],
+        tier: tierByUser.get(p.id) ?? "free",
+      }));
     },
   });
 
@@ -656,11 +663,25 @@ function UsersSection() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const setTier = useMutation({
+    mutationFn: async ({ user_id, tier }: { user_id: string; tier: "free" | "pro" }) => {
+      const { error } = await supabase
+        .from("creator_subscriptions")
+        .upsert({ user_id, tier }, { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Plan updated");
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <TableShell>
       <thead className="border-b border-border bg-surface">
-        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th><Th>Grant access</Th></tr>
+        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th><Th>Plan</Th><Th>Grant access</Th></tr>
       </thead>
       <tbody className="divide-y divide-border">
         {(data ?? []).map((u) => (
@@ -690,6 +711,18 @@ function UsersSection() {
                     </Button>
                   );
                 })}
+              </div>
+            </Td>
+            <Td>
+              <div className="flex items-center gap-2">
+                <StatusPill value={u.tier} />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setTier.mutate({ user_id: u.id, tier: u.tier === "pro" ? "free" : "pro" })}
+                >
+                  {u.tier === "pro" ? "Downgrade to Free" : "Upgrade to Pro"}
+                </Button>
               </div>
             </Td>
             <Td>

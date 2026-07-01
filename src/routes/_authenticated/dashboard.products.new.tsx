@@ -1,11 +1,13 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -18,6 +20,8 @@ import { useSession } from "@/hooks/use-auth";
 import { CATEGORIES, type CategoryValue } from "@/lib/categories";
 import { slugify } from "@/lib/format";
 
+const FREE_TIER_PRODUCT_LIMIT = 1;
+
 export const Route = createFileRoute("/_authenticated/dashboard/products/new")({
   head: () => ({ meta: [{ title: "New product · River" }] }),
   component: NewProductPage,
@@ -27,6 +31,28 @@ function NewProductPage() {
   const navigate = useNavigate();
   const { user } = useSession();
   const [busy, setBusy] = useState(false);
+
+  const { data: eligibility, isLoading: eligLoading } = useQuery({
+    enabled: !!user,
+    queryKey: ["product-eligibility", user?.id],
+    queryFn: async () => {
+      const uid = user!.id;
+      const [{ data: sub }, { count }] = await Promise.all([
+        supabase.from("creator_subscriptions").select("tier").eq("user_id", uid).maybeSingle(),
+        supabase.from("products").select("id", { count: "exact", head: true }).eq("creator_id", uid),
+      ]);
+      const tier = sub?.tier ?? "free";
+      const productCount = count ?? 0;
+      const canCreate = tier === "pro" || productCount < FREE_TIER_PRODUCT_LIMIT;
+      return { tier, productCount, canCreate };
+    },
+  });
+
+  function handleUpgradeInterest() {
+    toast.success("You're on the list", {
+      description: "We'll email you the moment Pro upgrades open.",
+    });
+  }
   const [form, setForm] = useState({
     title: "",
     tagline: "",
@@ -86,10 +112,55 @@ function NewProductPage() {
       toast.success("Product created");
       navigate({ to: "/dashboard/products" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save product");
+      const message = err instanceof Error ? err.message : "Could not save product";
+      if (message.toLowerCase().includes("row-level security")) {
+        toast.error("You've hit your free plan's product limit", {
+          description: "Upgrade to Pro for unlimited products.",
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setBusy(false);
     }
+  }
+
+  if (eligLoading) {
+    return (
+      <main className="container-page py-10">
+        <div className="mx-auto max-w-2xl">
+          <Skeleton className="h-64 rounded-2xl bg-surface" />
+        </div>
+      </main>
+    );
+  }
+
+  if (eligibility && !eligibility.canCreate) {
+    return (
+      <main className="container-page py-10">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="font-display text-3xl font-semibold">New product</h1>
+          <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-8 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Sparkles className="size-6" />
+            </div>
+            <p className="mt-4 font-display text-xl font-semibold">
+              Free plan is limited to {FREE_TIER_PRODUCT_LIMIT} product
+            </p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+              You've used your free product slot. Upgrade to Pro for unlimited products, or
+              retire your existing one first.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Button onClick={handleUpgradeInterest}>Upgrade to Pro — $9/mo</Button>
+              <Button asChild variant="outline">
+                <Link to="/dashboard/products">Manage existing products</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (

@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, CreditCard, Package, Users } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowUpRight, CreditCard, Package, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
+
+const FREE_TIER_PRODUCT_LIMIT = 1;
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Creator dashboard · River" }] }),
@@ -20,7 +23,7 @@ function Dashboard() {
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
       const uid = user!.id;
-      const [creator, products, follows, payout] = await Promise.all([
+      const [creator, products, follows, payout, subscription] = await Promise.all([
         supabase.from("creator_profiles").select("*").eq("user_id", uid).maybeSingle(),
         supabase
           .from("products")
@@ -35,12 +38,14 @@ function Dashboard() {
           .select("payout_method")
           .eq("user_id", uid)
           .maybeSingle(),
+        supabase.from("creator_subscriptions").select("tier").eq("user_id", uid).maybeSingle(),
       ]);
       return {
         creator: creator.data,
         products: products.data ?? [],
         followers: follows.count ?? 0,
         payoutMethod: payout.data?.payout_method ?? null,
+        tier: subscription.data?.tier ?? "free",
       };
     },
   });
@@ -48,6 +53,14 @@ function Dashboard() {
   const payoutsReady = !!overview?.payoutMethod;
   const products = overview?.products ?? [];
   const published = products.filter((p) => p.status === "published").length;
+  const tier = overview?.tier ?? "free";
+  const isPro = tier === "pro";
+
+  function handleUpgradeInterest() {
+    toast.success("You're on the list", {
+      description: "We'll email you the moment Pro upgrades open.",
+    });
+  }
 
   return (
     <main className="container-page py-10">
@@ -86,7 +99,34 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+      {!isLoading && !isPro && (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-accent/15 p-2 text-accent">
+              <Sparkles className="size-5" />
+            </div>
+            <div>
+              <p className="font-medium">
+                Free plan · {products.length}/{FREE_TIER_PRODUCT_LIMIT} product used
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Upgrade to Pro for unlimited products — $9/mo.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" className="font-mono text-xs uppercase" onClick={handleUpgradeInterest}>
+            Upgrade to Pro
+          </Button>
+        </div>
+      )}
+
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+        <Stat
+          label="Plan"
+          value={isLoading ? null : isPro ? "Pro" : "Free"}
+          sub={isPro ? "Unlimited products" : `${products.length}/${FREE_TIER_PRODUCT_LIMIT} products used`}
+          icon={<Sparkles className="size-4" />}
+        />
         <Stat
           label="Published products"
           value={isLoading ? null : `${published}`}

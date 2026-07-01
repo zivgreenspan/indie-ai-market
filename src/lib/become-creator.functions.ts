@@ -41,6 +41,14 @@ export const becomeCreator = createServerFn({ method: "POST" })
       throw new Error(roleErr.message);
     }
 
+    // Give every new creator an explicit free-tier row so admin tooling has
+    // something to show/grant against. If one already exists (re-submitting
+    // this form, or an admin already set a tier), leave it alone.
+    const { error: subErr } = await supabaseAdmin
+      .from("creator_subscriptions")
+      .upsert({ user_id: userId, tier: "free" }, { onConflict: "user_id", ignoreDuplicates: true });
+    if (subErr) throw new Error(subErr.message);
+
     // Payout destination is entirely optional at this stage - only write a
     // row if the creator actually gave us something to go on. "Set up
     // later" (no payout_method) with blank fields should not create a row.
