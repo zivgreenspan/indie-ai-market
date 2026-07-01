@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { Github, ShieldCheck, Star } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
@@ -9,8 +11,14 @@ import { categoryLabel } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
+import { PAYMENTS_LIVE } from "@/lib/config";
+
+const searchSchema = z.object({
+  access: z.enum(["denied", "not-ready"]).optional(),
+});
 
 export const Route = createFileRoute("/p/$username/$slug")({
+  validateSearch: (s) => searchSchema.parse(s),
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug} by @${params.username} · River` },
@@ -35,8 +43,22 @@ export const Route = createFileRoute("/p/$username/$slug")({
 
 function ProductPage() {
   const { username, slug } = Route.useParams();
+  const { access } = Route.useSearch();
   const navigate = useNavigate();
+  const scopedNavigate = Route.useNavigate();
   const { user } = useSession();
+
+  useEffect(() => {
+    if (!access) return;
+    if (access === "denied") {
+      toast.error("You don't have access to that yet", {
+        description: "Purchase or request access before opening the app.",
+      });
+    } else if (access === "not-ready") {
+      toast.info("This app is being set up, check back soon");
+    }
+    scopedNavigate({ search: () => ({}), replace: true });
+  }, [access, scopedNavigate]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["product", username, slug],
@@ -74,11 +96,11 @@ function ProductPage() {
       if (user) {
         const { data: ent } = await supabase
           .from("entitlements")
-          .select("active")
+          .select("active, expires_at")
           .eq("user_id", user.id)
           .eq("product_id", product.id)
           .maybeSingle();
-        entitled = !!ent?.active;
+        entitled = !!ent?.active && (!ent.expires_at || new Date(ent.expires_at) > new Date());
       }
 
       return { product, creator, ratings: ratings ?? [], avg, entitled };
@@ -90,8 +112,18 @@ function ProductPage() {
       navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
       return;
     }
-    toast.info("Checkout opens once Stripe Connect is wired up", {
-      description: "We're connecting Stripe in the next step of the build.",
+    toast.info("Checkout isn't wired up yet", {
+      description: "Payments are still being connected.",
+    });
+  }
+
+  function handleWaitlist() {
+    if (!user) {
+      navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
+      return;
+    }
+    toast.success("You're on the list", {
+      description: "We'll email you the moment purchases open.",
     });
   }
 
@@ -188,19 +220,31 @@ function ProductPage() {
               </p>
 
               {entitled ? (
-                <Button className="mt-5 w-full" disabled>
-                  You own this
+                <Button asChild className="mt-5 w-full font-medium">
+                  <Link to="/access/$productId" params={{ productId: product.id }}>
+                    Open App
+                  </Link>
                 </Button>
-              ) : (
+              ) : PAYMENTS_LIVE ? (
                 <Button className="mt-5 w-full font-medium" onClick={handleBuy}>
                   {user ? "Buy now" : "Sign in to buy"}
                 </Button>
+              ) : (
+                <Button
+                  className="mt-5 w-full font-medium"
+                  variant="outline"
+                  onClick={handleWaitlist}
+                >
+                  {user ? "Join waitlist" : "Sign in to join waitlist"}
+                </Button>
               )}
 
-              <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="size-4 text-primary" />
-                Payment processed by Stripe. Refunds within 7 days.
-              </div>
+              {PAYMENTS_LIVE && (
+                <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <ShieldCheck className="size-4 text-primary" />
+                  Refunds within 7 days.
+                </div>
+              )}
             </div>
 
             <Link

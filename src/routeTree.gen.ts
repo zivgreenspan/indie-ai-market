@@ -17,6 +17,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CUsernameRouteImport } from './routes/c.$username'
+import { Route as AccessProductIdRouteImport } from './routes/access.$productId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
@@ -62,6 +63,11 @@ const CUsernameRoute = CUsernameRouteImport.update({
   path: '/c/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccessProductIdRoute = AccessProductIdRouteImport.update({
+  id: '/access/$productId',
+  path: '/access/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/my-creators': typeof MyCreatorsRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/my-creators': typeof MyCreatorsRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/my-creators': typeof MyCreatorsRoute
   '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/become-creator'
     | '/dashboard'
+    | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
     | '/p/$username/$slug'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/become-creator'
     | '/dashboard'
+    | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
     | '/p/$username/$slug'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/_authenticated/become-creator'
     | '/_authenticated/dashboard'
+    | '/access/$productId'
     | '/c/$username'
     | '/_authenticated/dashboard/products'
     | '/p/$username/$slug'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LibraryRoute: typeof LibraryRoute
   MyCreatorsRoute: typeof MyCreatorsRoute
+  AccessProductIdRoute: typeof AccessProductIdRoute
   CUsernameRoute: typeof CUsernameRoute
   PUsernameSlugRoute: typeof PUsernameSlugRoute
 }
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/c/$username'
       fullPath: '/c/$username'
       preLoaderRoute: typeof CUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access/$productId': {
+      id: '/access/$productId'
+      path: '/access/$productId'
+      fullPath: '/access/$productId'
+      preLoaderRoute: typeof AccessProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -340,9 +360,20 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LibraryRoute: LibraryRoute,
   MyCreatorsRoute: MyCreatorsRoute,
+  AccessProductIdRoute: AccessProductIdRoute,
   CUsernameRoute: CUsernameRoute,
   PUsernameSlugRoute: PUsernameSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

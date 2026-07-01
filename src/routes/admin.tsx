@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -612,6 +613,18 @@ function UsersSection() {
     },
   });
 
+  const { data: products } = useQuery({
+    queryKey: ["admin", "products-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, title, status")
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const toggle = useMutation({
     mutationFn: async ({ user_id, role, grant }: { user_id: string; role: "user" | "creator" | "admin"; grant: boolean }) => {
       if (grant) {
@@ -629,11 +642,25 @@ function UsersSection() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const grantEntitlement = useMutation({
+    mutationFn: async ({ user_id, product_id }: { user_id: string; product_id: string }) => {
+      const { error } = await supabase
+        .from("entitlements")
+        .upsert(
+          { user_id, product_id, active: true, expires_at: null },
+          { onConflict: "user_id,product_id" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Entitlement granted"),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <TableShell>
       <thead className="border-b border-border bg-surface">
-        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th></tr>
+        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th><Th>Grant access</Th></tr>
       </thead>
       <tbody className="divide-y divide-border">
         {(data ?? []).map((u) => (
@@ -665,9 +692,51 @@ function UsersSection() {
                 })}
               </div>
             </Td>
+            <Td>
+              <GrantEntitlementCell
+                products={products ?? []}
+                onGrant={(product_id) => grantEntitlement.mutate({ user_id: u.id, product_id })}
+              />
+            </Td>
           </tr>
         ))}
       </tbody>
     </TableShell>
+  );
+}
+
+function GrantEntitlementCell({
+  products,
+  onGrant,
+}: {
+  products: { id: string; title: string; status: string }[];
+  onGrant: (productId: string) => void;
+}) {
+  const [productId, setProductId] = useState<string>("");
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={productId} onValueChange={setProductId}>
+        <SelectTrigger className="h-8 w-48">
+          <SelectValue placeholder="Select product" />
+        </SelectTrigger>
+        <SelectContent>
+          {products.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              {p.title} {p.status !== "published" && `(${p.status})`}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        size="sm"
+        disabled={!productId}
+        onClick={() => {
+          onGrant(productId);
+          setProductId("");
+        }}
+      >
+        Grant
+      </Button>
+    </div>
   );
 }
