@@ -7,7 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { becomeCreator } from "@/lib/become-creator.functions";
+
+type PayoutMethod = "paypal" | "bank" | "later";
 
 export const Route = createFileRoute("/_authenticated/become-creator")({
   head: () => ({ meta: [{ title: "Become a creator · River" }] }),
@@ -25,14 +34,24 @@ function BecomeCreatorPage() {
     x_handle: "",
     github_handle: "",
   });
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("later");
+  const [payoutEmail, setPayoutEmail] = useState("");
+  const [payoutDetails, setPayoutDetails] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      await submit({ data: form });
+      await submit({
+        data: {
+          ...form,
+          payout_method: payoutMethod === "later" ? null : payoutMethod,
+          payout_email: payoutMethod === "paypal" ? payoutEmail : null,
+          payout_details: payoutMethod === "bank" ? payoutDetails : null,
+        },
+      });
       toast.success("You're a creator", {
-        description: "Next: connect Stripe and ship your first product.",
+        description: "Next: ship your first product.",
       });
       navigate({ to: "/dashboard" });
     } catch (err) {
@@ -55,7 +74,10 @@ function BecomeCreatorPage() {
           This is the page customers see when they consider buying from you. Make it count.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-10 space-y-6 rounded-2xl border border-border bg-card p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-10 space-y-6 rounded-2xl border border-border bg-card p-6"
+        >
           <Field
             label="One-liner"
             description="What do you build? 140 characters or fewer."
@@ -104,10 +126,63 @@ function BecomeCreatorPage() {
             />
           </Field>
 
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
-              You'll connect Stripe to receive payouts in the next step.
+          <div className="space-y-2 border-t border-border pt-6">
+            <p className="text-sm text-muted-foreground">
+              River pays creators monthly. We handle all transactions and transfer your earnings
+              directly to you, minus our 10% platform fee. We support multiple payout methods
+              globally.
             </p>
+          </div>
+
+          <div className="space-y-6 rounded-xl border border-border bg-surface/40 p-5">
+            <div>
+              <h2 className="font-display text-lg font-semibold">How would you like to be paid?</h2>
+            </div>
+
+            <Field label="Payout method" description="You can change this anytime.">
+              <Select
+                value={payoutMethod}
+                onValueChange={(v) => setPayoutMethod(v as PayoutMethod)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paypal">Digital Wallet (e.g. PayPal)</SelectItem>
+                  <SelectItem value="bank">Bank Transfer</SelectItem>
+                  <SelectItem value="later">Set up later</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            {payoutMethod === "paypal" && (
+              <Field label="Your payment email address">
+                <Input
+                  type="email"
+                  value={payoutEmail}
+                  onChange={(e) => setPayoutEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </Field>
+            )}
+
+            {payoutMethod === "bank" && (
+              <Field label="Your bank details (we'll follow up to confirm)">
+                <Textarea
+                  value={payoutDetails}
+                  onChange={(e) => setPayoutDetails(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                />
+              </Field>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              You can update your payout preferences anytime from your settings.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end pt-2">
             <Button type="submit" disabled={busy}>
               {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
               Continue
