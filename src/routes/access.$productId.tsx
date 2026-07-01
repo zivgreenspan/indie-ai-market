@@ -37,10 +37,13 @@ export const Route = createFileRoute("/access/$productId")({
       });
     }
 
-    const { data: isEntitled } = await supabase.rpc("has_entitlement", {
-      _user_id: user.id,
-      _product_id: product.id,
-    });
+    const { data: ent } = await supabase
+      .from("entitlements")
+      .select("active, expires_at")
+      .eq("user_id", user.id)
+      .eq("product_id", product.id)
+      .maybeSingle();
+    const isEntitled = !!ent?.active && (!ent.expires_at || new Date(ent.expires_at) > new Date());
 
     if (!isEntitled) {
       throw redirect({ ...productPage, search: { access: "denied" as const } });
