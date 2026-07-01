@@ -149,6 +149,33 @@ export type Database = {
           },
         ]
       }
+      creator_payout_details: {
+        Row: {
+          created_at: string
+          payout_details: Json | null
+          payout_email: string | null
+          payout_method: Database["public"]["Enums"]["payout_method"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          payout_details?: Json | null
+          payout_email?: string | null
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          payout_details?: Json | null
+          payout_email?: string | null
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       creator_profiles: {
         Row: {
           created_at: string
@@ -156,9 +183,6 @@ export type Database = {
           is_suspended: boolean
           long_bio: string | null
           onboarded_at: string | null
-          payout_details: Json
-          payout_email: string | null
-          payout_method: Database["public"]["Enums"]["payout_method"] | null
           tagline: string | null
           updated_at: string
           user_id: string
@@ -171,9 +195,6 @@ export type Database = {
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
-          payout_details?: Json
-          payout_email?: string | null
-          payout_method?: Database["public"]["Enums"]["payout_method"] | null
           tagline?: string | null
           updated_at?: string
           user_id: string
@@ -186,9 +207,6 @@ export type Database = {
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
-          payout_details?: Json
-          payout_email?: string | null
-          payout_method?: Database["public"]["Enums"]["payout_method"] | null
           tagline?: string | null
           updated_at?: string
           user_id?: string
@@ -652,17 +670,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_entitlement: {
-        Args: { _product_id: string; _user_id: string }
-        Returns: boolean
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       app_role: "user" | "creator" | "admin"

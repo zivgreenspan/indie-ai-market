@@ -21,11 +21,14 @@ export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/auth", search: { mode: "signin" as const, redirect: "/admin" } });
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: u.user.id,
-      _role: "admin",
-    });
-    if (!isAdmin) throw redirect({ to: "/" });
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", u.user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roles) throw redirect({ to: "/" });
+
   },
   head: () => ({ meta: [{ title: "Admin · River" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
