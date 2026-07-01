@@ -4,7 +4,6 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,16 +70,21 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      // Direct Supabase OAuth (not Lovable's managed auth proxy) - that flow
+      // only handles redirects for domains registered in Lovable Cloud, so
+      // it breaks on any other host (e.g. this app running on Vercel).
+      // Requires Google enabled under Supabase Auth -> Providers, with this
+      // deployment's URL added to Auth -> URL Configuration.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href },
       });
-      if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
+      if (error) {
+        toast.error(error.message ?? "Google sign-in failed");
         setBusy(false);
         return;
       }
-      if (result.redirected) return;
-      navigate({ to: redirect ?? "/", replace: true });
+      // On success the browser is already navigating to Google; nothing left to do here.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setBusy(false);
