@@ -20,20 +20,32 @@ function Dashboard() {
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
       const uid = user!.id;
-      const [creator, products, follows] = await Promise.all([
+      const [creator, products, follows, payout] = await Promise.all([
         supabase.from("creator_profiles").select("*").eq("user_id", uid).maybeSingle(),
-        supabase.from("products").select("id, title, status, price_cents, currency, pricing_model, slug").eq("creator_id", uid),
-        supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("creator_id", uid),
+        supabase
+          .from("products")
+          .select("id, title, status, price_cents, currency, pricing_model, slug")
+          .eq("creator_id", uid),
+        supabase
+          .from("follows")
+          .select("follower_id", { count: "exact", head: true })
+          .eq("creator_id", uid),
+        supabase
+          .from("creator_payout_details")
+          .select("payout_method")
+          .eq("user_id", uid)
+          .maybeSingle(),
       ]);
       return {
         creator: creator.data,
         products: products.data ?? [],
         followers: follows.count ?? 0,
+        payoutMethod: payout.data?.payout_method ?? null,
       };
     },
   });
 
-  const payoutsReady = false;
+  const payoutsReady = !!overview?.payoutMethod;
   const products = overview?.products ?? [];
   const published = products.filter((p) => p.status === "published").length;
 
@@ -61,14 +73,15 @@ function Dashboard() {
               <CreditCard className="size-5" />
             </div>
             <div>
-              <p className="font-medium">Connect Stripe to start selling</p>
+              <p className="font-medium">Add a payout method to start selling</p>
               <p className="text-sm text-muted-foreground">
-                Payouts land directly in your bank. River takes a 10% platform fee. Nothing else.
+                Payouts go directly to your bank or digital wallet. River takes a 10% platform fee.
+                Nothing else.
               </p>
             </div>
           </div>
-          <Button disabled variant="outline" className="font-mono text-xs uppercase">
-            Coming up next
+          <Button asChild variant="outline" className="font-mono text-xs uppercase">
+            <Link to="/become-creator">Set up payouts</Link>
           </Button>
         </div>
       )}
@@ -89,7 +102,7 @@ function Dashboard() {
         <Stat
           label="Revenue (MTD)"
           value="$0"
-          sub="Live once Stripe is connected"
+          sub="Live once payments are enabled"
           icon={<ArrowUpRight className="size-4" />}
         />
       </div>
@@ -97,7 +110,10 @@ function Dashboard() {
       <section className="mt-10">
         <div className="flex items-end justify-between">
           <h2 className="font-display text-xl font-semibold">Your products</h2>
-          <Link to="/dashboard/products" className="text-xs text-muted-foreground hover:text-foreground">
+          <Link
+            to="/dashboard/products"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
             View all →
           </Link>
         </div>
@@ -122,7 +138,9 @@ function Dashboard() {
                   <p className="font-medium">{p.title}</p>
                   <p className="text-xs text-muted-foreground">
                     <span className="font-mono uppercase tracking-wide">{p.status}</span> ·{" "}
-                    <span className="text-accent">{formatPrice(p.price_cents, p.currency, p.pricing_model)}</span>
+                    <span className="text-accent">
+                      {formatPrice(p.price_cents, p.currency, p.pricing_model)}
+                    </span>
                   </p>
                 </div>
               </li>
