@@ -7,6 +7,13 @@ import { SiteHeader } from "@/components/site-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/format";
 
 export const Route = createFileRoute("/admin")({
@@ -224,8 +231,43 @@ function DeploymentRow({ row, onLive }: { row: any; onLive: (url: string) => voi
 }
 
 /* ============== REPORTS ============== */
+type ReportTarget = { type: "product" | "rating" | "comment" | "creator"; id: string };
+
+type ReportContentResult =
+  | null
+  | ({ kind: "product" } & {
+      id: string;
+      title: string;
+      tagline: string | null;
+      description: string | null;
+      status: string;
+      creator: { username: string } | null;
+    })
+  | ({ kind: "rating" } & {
+      id: string;
+      stars: number;
+      title: string | null;
+      body: string | null;
+      product: { title: string } | null;
+      user: { username: string } | null;
+    })
+  | ({ kind: "comment" } & {
+      id: string;
+      body: string;
+      product: { title: string } | null;
+      user: { username: string } | null;
+    })
+  | ({ kind: "creator" } & {
+      user_id: string;
+      tagline: string | null;
+      long_bio: string | null;
+      is_suspended: boolean;
+      profile: { username: string; display_name: string } | null;
+    });
+
 function ReportsSection() {
   const qc = useQueryClient();
+  const [viewing, setViewing] = useState<ReportTarget | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "reports"],
     queryFn: async () => {
@@ -253,28 +295,152 @@ function ReportsSection() {
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
-    <TableShell>
-      <thead className="border-b border-border bg-surface">
-        <tr><Th>Target</Th><Th>Reporter</Th><Th>Reason</Th><Th>Target ID</Th><Th>Actions</Th></tr>
-      </thead>
-      <tbody className="divide-y divide-border">
-        {(data ?? []).map((r) => (
-          <tr key={r.id}>
-            <Td><span className="font-mono text-xs uppercase">{r.target_type}</span></Td>
-            <Td>@{r.reporter?.username ?? "—"}</Td>
-            <Td className="max-w-md truncate">{r.reason}</Td>
-            <Td className="font-mono text-xs text-muted-foreground">{r.target_id}</Td>
-            <Td>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => update.mutate({ id: r.id, status: "resolved" })}>Resolve</Button>
-                <Button size="sm" variant="outline" onClick={() => update.mutate({ id: r.id, status: "dismissed" })}>Dismiss</Button>
-              </div>
-            </Td>
-          </tr>
-        ))}
-        {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No open reports.</span></Td></tr>}
-      </tbody>
-    </TableShell>
+    <>
+      <TableShell>
+        <thead className="border-b border-border bg-surface">
+          <tr><Th>Target</Th><Th>Reporter</Th><Th>Reason</Th><Th>Content</Th><Th>Actions</Th></tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {(data ?? []).map((r) => (
+            <tr key={r.id}>
+              <Td><span className="font-mono text-xs uppercase">{r.target_type}</span></Td>
+              <Td>@{r.reporter?.username ?? "—"}</Td>
+              <Td className="max-w-md truncate">{r.reason}</Td>
+              <Td>
+                <button
+                  className="font-mono text-xs text-primary underline-offset-2 hover:underline"
+                  onClick={() => setViewing({ type: r.target_type, id: r.target_id })}
+                >
+                  View content
+                </button>
+              </Td>
+              <Td>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => update.mutate({ id: r.id, status: "resolved" })}>Resolve</Button>
+                  <Button size="sm" variant="outline" onClick={() => update.mutate({ id: r.id, status: "dismissed" })}>Dismiss</Button>
+                </div>
+              </Td>
+            </tr>
+          ))}
+          {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No open reports.</span></Td></tr>}
+        </tbody>
+      </TableShell>
+      <ReportContentDialog target={viewing} onClose={() => setViewing(null)} />
+    </>
+  );
+}
+
+function ReportContentDialog({ target, onClose }: { target: ReportTarget | null; onClose: () => void }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["admin", "report-content", target?.type, target?.id],
+    enabled: !!target,
+    queryFn: async (): Promise<ReportContentResult> => {
+      if (!target) return null;
+      switch (target.type) {
+        case "product": {
+          const { data, error } = await supabase
+            .from("products")
+            .select(
+              "id, title, tagline, description, status, creator:profiles!products_creator_id_fkey(username)",
+            )
+            .eq("id", target.id)
+            .maybeSingle();
+          if (error) throw error;
+          return data && { kind: "product", ...data };
+        }
+        case "rating": {
+          const { data, error } = await supabase
+            .from("ratings")
+            .select(
+              "id, stars, title, body, created_at, product:products(title), user:profiles!ratings_user_id_fkey(username)",
+            )
+            .eq("id", target.id)
+            .maybeSingle();
+          if (error) throw error;
+          return data && { kind: "rating", ...data };
+        }
+        case "comment": {
+          const { data, error } = await supabase
+            .from("comments")
+            .select(
+              "id, body, created_at, product:products(title), user:profiles!comments_user_id_fkey(username)",
+            )
+            .eq("id", target.id)
+            .maybeSingle();
+          if (error) throw error;
+          return data && { kind: "comment", ...data };
+        }
+        case "creator": {
+          const { data, error } = await supabase
+            .from("creator_profiles")
+            .select(
+              "user_id, tagline, long_bio, is_suspended, profile:profiles!creator_profiles_user_id_fkey(username, display_name)",
+            )
+            .eq("user_id", target.id)
+            .maybeSingle();
+          if (error) throw error;
+          return data && { kind: "creator", ...data };
+        }
+        default:
+          return null;
+      }
+    },
+  });
+
+  return (
+    <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            Reported {target?.type}
+          </DialogTitle>
+          <DialogDescription>The underlying content that was reported.</DialogDescription>
+        </DialogHeader>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : isError || !data ? (
+          <p className="text-sm text-muted-foreground">
+            This content no longer exists — it may have already been removed.
+          </p>
+        ) : data.kind === "product" ? (
+          <div className="space-y-2 text-sm">
+            <p className="font-medium">{data.title}</p>
+            <p className="text-muted-foreground">by @{data.creator?.username ?? "—"}</p>
+            <p className="text-muted-foreground">{data.tagline}</p>
+            <p>{data.description}</p>
+            <p>
+              <StatusPill value={data.status} />
+            </p>
+          </div>
+        ) : data.kind === "rating" ? (
+          <div className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              @{data.user?.username ?? "—"} rated{" "}
+              <span className="font-medium">{data.product?.title ?? "—"}</span> {data.stars}/5
+            </p>
+            {data.title && <p className="font-medium">{data.title}</p>}
+            <p>{data.body}</p>
+          </div>
+        ) : data.kind === "comment" ? (
+          <div className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              @{data.user?.username ?? "—"} on <span className="font-medium">{data.product?.title ?? "—"}</span>
+            </p>
+            <p>{data.body}</p>
+          </div>
+        ) : data.kind === "creator" ? (
+          <div className="space-y-2 text-sm">
+            <p className="font-medium">@{data.profile?.username ?? "—"}</p>
+            <p className="text-muted-foreground">{data.profile?.display_name}</p>
+            <p>{data.tagline}</p>
+            <p className="whitespace-pre-wrap">{data.long_bio}</p>
+            <p>
+              <StatusPill value={data.is_suspended ? "suspended" : "active"} />
+            </p>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
