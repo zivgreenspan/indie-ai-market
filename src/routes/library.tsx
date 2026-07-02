@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Library as LibraryIcon, Lock } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Clock, Library as LibraryIcon, Lock, X } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { ProductCard, type ProductCardData } from "@/components/product-card";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/library")({
 
 function LibraryPage() {
   const { user, loading: sessionLoading } = useSession();
+  const queryClient = useQueryClient();
 
   const { data: items, isLoading } = useQuery({
     enabled: !!user,
@@ -33,6 +35,37 @@ function LibraryPage() {
         .filter((p): p is NonNullable<typeof p> => !!p && !!p.creator) as unknown as ProductCardData[];
     },
   });
+
+  const { data: waitlist, isLoading: waitlistLoading } = useQuery({
+    enabled: !!user,
+    queryKey: ["waitlist", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("waitlist_signups")
+        .select(
+          "id, product:products(id, slug, title, tagline, cover_image_url, category, price_cents, currency, pricing_model, creator:profiles!products_creator_id_fkey(username, display_name, avatar_url))",
+        )
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? [])
+        .filter((r) => r.product && (r.product as any).creator)
+        .map((r) => ({ signupId: r.id, product: r.product as unknown as ProductCardData }));
+    },
+  });
+
+  const leaveWaitlist = useMutation({
+    mutationFn: async (signupId: string) => {
+      const { error } = await supabase.from("waitlist_signups").delete().eq("id", signupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Removed from waitlist");
+      queryClient.invalidateQueries({ queryKey: ["waitlist", user?.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   return (
     <>
