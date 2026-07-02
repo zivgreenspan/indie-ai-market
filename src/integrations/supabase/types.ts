@@ -400,8 +400,6 @@ export type Database = {
           github_repo_url: string | null
           hosted_app_url: string | null
           id: string
-          lemon_squeezy_product_id: string | null
-          lemon_squeezy_variant_id: string | null
           monthly_visit_count: number
           price_cents: number
           pricing_model: Database["public"]["Enums"]["pricing_model"]
@@ -429,8 +427,6 @@ export type Database = {
           github_repo_url?: string | null
           hosted_app_url?: string | null
           id?: string
-          lemon_squeezy_product_id?: string | null
-          lemon_squeezy_variant_id?: string | null
           monthly_visit_count?: number
           price_cents: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
@@ -458,8 +454,6 @@ export type Database = {
           github_repo_url?: string | null
           hosted_app_url?: string | null
           id?: string
-          lemon_squeezy_product_id?: string | null
-          lemon_squeezy_variant_id?: string | null
           monthly_visit_count?: number
           price_cents?: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
@@ -520,9 +514,6 @@ export type Database = {
           currency: string
           current_period_end: string | null
           id: string
-          lemon_squeezy_customer_id: string | null
-          lemon_squeezy_order_id: string | null
-          lemon_squeezy_order_item_id: string | null
           platform_fee_cents: number
           product_id: string
           status: Database["public"]["Enums"]["purchase_status"]
@@ -539,9 +530,6 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           id?: string
-          lemon_squeezy_customer_id?: string | null
-          lemon_squeezy_order_id?: string | null
-          lemon_squeezy_order_item_id?: string | null
           platform_fee_cents?: number
           product_id: string
           status?: Database["public"]["Enums"]["purchase_status"]
@@ -558,9 +546,6 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           id?: string
-          lemon_squeezy_customer_id?: string | null
-          lemon_squeezy_order_id?: string | null
-          lemon_squeezy_order_item_id?: string | null
           platform_fee_cents?: number
           product_id?: string
           status?: Database["public"]["Enums"]["purchase_status"]
