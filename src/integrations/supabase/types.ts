@@ -223,6 +223,27 @@ export type Database = {
           },
         ]
       }
+      creator_subscriptions: {
+        Row: {
+          created_at: string
+          tier: Database["public"]["Enums"]["creator_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          tier?: Database["public"]["Enums"]["creator_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          tier?: Database["public"]["Enums"]["creator_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       entitlements: {
         Row: {
           active: boolean
@@ -703,6 +724,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
+      creator_tier: "free" | "pro"
       deployment_status: "none" | "pending" | "deploying" | "live" | "failed"
       earning_status: "pending" | "available" | "paid" | "reversed"
       payout_method: "paypal" | "wise" | "bank"
@@ -847,6 +869,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
+      creator_tier: ["free", "pro"],
       deployment_status: ["none", "pending", "deploying", "live", "failed"],
       earning_status: ["pending", "available", "paid", "reversed"],
       payout_method: ["paypal", "wise", "bank"],
