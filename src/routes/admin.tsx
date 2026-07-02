@@ -50,6 +50,7 @@ function AdminPage() {
             <TabsTrigger value="creators">Creators</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="webhooks">Webhook failures</TabsTrigger>
           </TabsList>
           <TabsContent value="payouts" className="mt-6"><PayoutsSection /></TabsContent>
           <TabsContent value="deployments" className="mt-6"><DeploymentsSection /></TabsContent>
@@ -57,6 +58,7 @@ function AdminPage() {
           <TabsContent value="creators" className="mt-6"><CreatorsSection /></TabsContent>
           <TabsContent value="products" className="mt-6"><ProductsSection /></TabsContent>
           <TabsContent value="users" className="mt-6"><UsersSection /></TabsContent>
+          <TabsContent value="webhooks" className="mt-6"><WebhookFailuresSection /></TabsContent>
         </Tabs>
       </main>
     </>
@@ -177,7 +179,9 @@ function DeploymentsSection() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, github_repo_url, hosted_app_url, deployment_status, creator:profiles!products_creator_id_fkey(username)")
+        .select(
+          "id, title, github_repo_url, hosted_app_url, deployment_status, deployment_provider, creator:profiles!products_creator_id_fkey(username)",
+        )
         .in("deployment_status", ["pending", "failed"])
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -202,17 +206,24 @@ function DeploymentsSection() {
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
-    <TableShell>
-      <thead className="border-b border-border bg-surface">
-        <tr><Th>Creator</Th><Th>Product</Th><Th>Repo</Th><Th>Status</Th><Th>Hosted URL → mark live</Th></tr>
-      </thead>
-      <tbody className="divide-y divide-border">
-        {(data ?? []).map((r) => (
-          <DeploymentRow key={r.id} row={r} onLive={(url) => markLive.mutate({ id: r.id, url })} />
-        ))}
-        {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No pending deployments.</span></Td></tr>}
-      </tbody>
-    </TableShell>
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        GitHub-repo deployments go through River's single Vercel account via the Vercel API. This
+        flow is still manual: deploy the repo yourself, paste the resulting Vercel URL below, and
+        mark it live.
+      </p>
+      <TableShell>
+        <thead className="border-b border-border bg-surface">
+          <tr><Th>Creator</Th><Th>Product</Th><Th>Repo</Th><Th>Provider</Th><Th>Status</Th><Th>Vercel URL → mark live</Th></tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {(data ?? []).map((r) => (
+            <DeploymentRow key={r.id} row={r} onLive={(url) => markLive.mutate({ id: r.id, url })} />
+          ))}
+          {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No pending deployments.</span></Td></tr>}
+        </tbody>
+      </TableShell>
+    </div>
   );
 }
 
@@ -223,10 +234,11 @@ function DeploymentRow({ row, onLive }: { row: any; onLive: (url: string) => voi
       <Td>@{row.creator?.username ?? "—"}</Td>
       <Td>{row.title}</Td>
       <Td>{row.github_repo_url ? <a className="text-primary hover:underline" href={row.github_repo_url} target="_blank" rel="noreferrer">repo</a> : "—"}</Td>
+      <Td className="font-mono text-xs uppercase text-muted-foreground">{row.deployment_provider ?? "vercel"}</Td>
       <Td><StatusPill value={row.deployment_status} /></Td>
       <Td>
         <div className="flex items-center gap-2">
-          <Input placeholder="https://app.example.com" value={url} onChange={(e) => setUrl(e.target.value)} className="h-8 w-64" />
+          <Input placeholder="https://your-app.vercel.app" value={url} onChange={(e) => setUrl(e.target.value)} className="h-8 w-64" />
           <Button size="sm" onClick={() => url && onLive(url)}>Mark live</Button>
         </div>
       </Td>
@@ -449,6 +461,8 @@ function ReportContentDialog({ target, onClose }: { target: ReportTarget | null;
 }
 
 /* ============== CREATORS ============== */
+const TIER_OPTIONS = ["free", "creator", "builder", "studio"] as const;
+
 function CreatorsSection() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -456,7 +470,9 @@ function CreatorsSection() {
     queryFn: async () => {
       const { data: profiles, error } = await supabase
         .from("creator_profiles")
-        .select("user_id, is_suspended, onboarded_at, profile:profiles!creator_profiles_user_id_fkey(username, display_name)")
+        .select(
+          "user_id, is_suspended, onboarded_at, creator_subscription_tier, trial_ends_at, profile:profiles!creator_profiles_user_id_fkey(username, display_name)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
 
@@ -489,6 +505,27 @@ function CreatorsSection() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const setTier = useMutation({
+    mutationFn: async ({
+      user_id,
+      tier,
+    }: {
+      user_id: string;
+      tier: (typeof TIER_OPTIONS)[number];
+    }) => {
+      const { error } = await supabase
+        .from("creator_profiles")
+        .update({ creator_subscription_tier: tier })
+        .eq("user_id", user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Plan updated");
+      qc.invalidateQueries({ queryKey: ["admin", "creators"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const remove = useMutation({
     mutationFn: async (user_id: string) => {
       const { error: rErr } = await supabase.from("user_roles").delete().eq("user_id", user_id).eq("role", "creator");
@@ -507,12 +544,38 @@ function CreatorsSection() {
   return (
     <TableShell>
       <thead className="border-b border-border bg-surface">
-        <tr><Th>Creator</Th><Th>Products</Th><Th>Total earnings</Th><Th>Status</Th><Th>Actions</Th></tr>
+        <tr><Th>Creator</Th><Th>Plan</Th><Th>Products</Th><Th>Total earnings</Th><Th>Status</Th><Th>Actions</Th></tr>
       </thead>
       <tbody className="divide-y divide-border">
         {(data ?? []).map((c) => (
           <tr key={c.user_id}>
             <Td>@{c.profile?.username ?? "—"}</Td>
+            <Td>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={c.creator_subscription_tier}
+                  onValueChange={(v) =>
+                    setTier.mutate({ user_id: c.user_id, tier: v as (typeof TIER_OPTIONS)[number] })
+                  }
+                >
+                  <SelectTrigger className="h-8 w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIER_OPTIONS.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t[0].toUpperCase() + t.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {c.creator_subscription_tier === "free" && c.trial_ends_at && (
+                  <span className="text-xs text-muted-foreground">
+                    trial ends {new Date(c.trial_ends_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </Td>
             <Td className="font-mono">{c.product_count}</Td>
             <Td className="font-mono text-accent">{formatPrice(c.total_earnings_cents, "USD", "one_time")}</Td>
             <Td>{c.is_suspended ? <StatusPill value="suspended" /> : <StatusPill value="active" />}</Td>
@@ -598,10 +661,9 @@ function UsersSection() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: async () => {
-      const [{ data: profiles, error }, { data: roles }, { data: subs }] = await Promise.all([
+      const [{ data: profiles, error }, { data: roles }] = await Promise.all([
         supabase.from("profiles").select("id, username, display_name, created_at").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
-        supabase.from("creator_subscriptions").select("user_id, tier"),
       ]);
       if (error) throw error;
       const rolesByUser = new Map<string, string[]>();
@@ -610,12 +672,9 @@ function UsersSection() {
         arr.push(r.role);
         rolesByUser.set(r.user_id, arr);
       });
-      const tierByUser = new Map<string, string>();
-      (subs ?? []).forEach((s) => tierByUser.set(s.user_id, s.tier));
       return (profiles ?? []).map((p) => ({
         ...p,
         roles: rolesByUser.get(p.id) ?? [],
-        tier: tierByUser.get(p.id) ?? "free",
       }));
     },
   });
@@ -663,25 +722,11 @@ function UsersSection() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const setTier = useMutation({
-    mutationFn: async ({ user_id, tier }: { user_id: string; tier: "free" | "pro" }) => {
-      const { error } = await supabase
-        .from("creator_subscriptions")
-        .upsert({ user_id, tier }, { onConflict: "user_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Plan updated");
-      qc.invalidateQueries({ queryKey: ["admin", "users"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
     <TableShell>
       <thead className="border-b border-border bg-surface">
-        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th><Th>Plan</Th><Th>Grant access</Th></tr>
+        <tr><Th>User</Th><Th>Roles</Th><Th>Toggle</Th><Th>Grant access</Th></tr>
       </thead>
       <tbody className="divide-y divide-border">
         {(data ?? []).map((u) => (
@@ -711,18 +756,6 @@ function UsersSection() {
                     </Button>
                   );
                 })}
-              </div>
-            </Td>
-            <Td>
-              <div className="flex items-center gap-2">
-                <StatusPill value={u.tier} />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setTier.mutate({ user_id: u.id, tier: u.tier === "pro" ? "free" : "pro" })}
-                >
-                  {u.tier === "pro" ? "Downgrade to Free" : "Upgrade to Pro"}
-                </Button>
               </div>
             </Td>
             <Td>
@@ -770,6 +803,76 @@ function GrantEntitlementCell({
       >
         Grant
       </Button>
+    </div>
+  );
+}
+
+/* ============== WEBHOOK FAILURES ============== */
+function WebhookFailuresSection() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "webhook-failures"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("webhook_failures")
+        .select(
+          "id, received_at, reason, resolved, raw_payload, product:products(title), creator:profiles!webhook_failures_creator_id_fkey(username)",
+        )
+        .order("received_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const resolve = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("webhook_failures").update({ resolved: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Marked resolved");
+      qc.invalidateQueries({ queryKey: ["admin", "webhook-failures"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Stripe webhook payloads we couldn't process automatically - missing/malformed metadata,
+        signature verification failure, or an unrecognized product. Review and grant access
+        manually via Users → Grant access if a real purchase was missed.
+      </p>
+      <TableShell>
+        <thead className="border-b border-border bg-surface">
+          <tr><Th>Received</Th><Th>Reason</Th><Th>Creator</Th><Th>Product</Th><Th>Status</Th><Th>Actions</Th></tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {(data ?? []).map((f: any) => (
+            <tr key={f.id}>
+              <Td className="whitespace-nowrap font-mono text-xs">
+                {new Date(f.received_at).toLocaleString()}
+              </Td>
+              <Td className="max-w-xs text-xs">{f.reason}</Td>
+              <Td>{f.creator?.username ? `@${f.creator.username}` : "—"}</Td>
+              <Td>{f.product?.title ?? "—"}</Td>
+              <Td>{f.resolved ? <StatusPill value="resolved" /> : <StatusPill value="open" />}</Td>
+              <Td>
+                {!f.resolved && (
+                  <Button size="sm" variant="outline" onClick={() => resolve.mutate(f.id)}>
+                    Mark resolved
+                  </Button>
+                )}
+              </Td>
+            </tr>
+          ))}
+          {(!data || data.length === 0) && (
+            <tr><Td className="text-muted-foreground"><span>No webhook failures logged.</span></Td></tr>
+          )}
+        </tbody>
+      </TableShell>
     </div>
   );
 }

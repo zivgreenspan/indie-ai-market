@@ -155,6 +155,7 @@ export type Database = {
           payout_details: Json | null
           payout_email: string | null
           payout_method: Database["public"]["Enums"]["payout_method"] | null
+          stripe_webhook_secret: string | null
           updated_at: string
           user_id: string
         }
@@ -163,6 +164,7 @@ export type Database = {
           payout_details?: Json | null
           payout_email?: string | null
           payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          stripe_webhook_secret?: string | null
           updated_at?: string
           user_id: string
         }
@@ -171,6 +173,7 @@ export type Database = {
           payout_details?: Json | null
           payout_email?: string | null
           payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          stripe_webhook_secret?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -179,11 +182,15 @@ export type Database = {
       creator_profiles: {
         Row: {
           created_at: string
+          creator_subscription_tier: Database["public"]["Enums"]["creator_subscription_tier"]
+          custom_subdomain: string | null
           github_handle: string | null
           is_suspended: boolean
           long_bio: string | null
           onboarded_at: string | null
+          subscription_started_at: string | null
           tagline: string | null
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
           website: string | null
@@ -191,11 +198,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"]
+          custom_subdomain?: string | null
           github_handle?: string | null
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
+          subscription_started_at?: string | null
           tagline?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -203,11 +214,15 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"]
+          custom_subdomain?: string | null
           github_handle?: string | null
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
+          subscription_started_at?: string | null
           tagline?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null
@@ -222,27 +237,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      creator_subscriptions: {
-        Row: {
-          created_at: string
-          tier: Database["public"]["Enums"]["creator_tier"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          tier?: Database["public"]["Enums"]["creator_tier"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          tier?: Database["public"]["Enums"]["creator_tier"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       entitlements: {
         Row: {
@@ -398,6 +392,7 @@ export type Database = {
           created_at: string
           creator_id: string
           currency: string
+          deployment_provider: string
           deployment_status: Database["public"]["Enums"]["deployment_status"]
           description: string | null
           featured: boolean
@@ -407,15 +402,18 @@ export type Database = {
           id: string
           lemon_squeezy_product_id: string | null
           lemon_squeezy_variant_id: string | null
+          monthly_visit_count: number
           price_cents: number
           pricing_model: Database["public"]["Enums"]["pricing_model"]
           published_at: string | null
           slug: string
           status: Database["public"]["Enums"]["product_status"]
+          stripe_payment_link_url: string | null
           tagline: string | null
           tags: string[]
           title: string
           updated_at: string
+          visit_count_month: string
         }
         Insert: {
           category?: Database["public"]["Enums"]["product_category"]
@@ -423,6 +421,7 @@ export type Database = {
           created_at?: string
           creator_id: string
           currency?: string
+          deployment_provider?: string
           deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
           featured?: boolean
@@ -432,15 +431,18 @@ export type Database = {
           id?: string
           lemon_squeezy_product_id?: string | null
           lemon_squeezy_variant_id?: string | null
+          monthly_visit_count?: number
           price_cents: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
           published_at?: string | null
           slug: string
           status?: Database["public"]["Enums"]["product_status"]
+          stripe_payment_link_url?: string | null
           tagline?: string | null
           tags?: string[]
           title: string
           updated_at?: string
+          visit_count_month?: string
         }
         Update: {
           category?: Database["public"]["Enums"]["product_category"]
@@ -448,6 +450,7 @@ export type Database = {
           created_at?: string
           creator_id?: string
           currency?: string
+          deployment_provider?: string
           deployment_status?: Database["public"]["Enums"]["deployment_status"]
           description?: string | null
           featured?: boolean
@@ -457,15 +460,18 @@ export type Database = {
           id?: string
           lemon_squeezy_product_id?: string | null
           lemon_squeezy_variant_id?: string | null
+          monthly_visit_count?: number
           price_cents?: number
           pricing_model?: Database["public"]["Enums"]["pricing_model"]
           published_at?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["product_status"]
+          stripe_payment_link_url?: string | null
           tagline?: string | null
           tags?: string[]
           title?: string
           updated_at?: string
+          visit_count_month?: string
         }
         Relationships: [
           {
@@ -520,6 +526,8 @@ export type Database = {
           platform_fee_cents: number
           product_id: string
           status: Database["public"]["Enums"]["purchase_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           subtotal_cents: number
           tax_cents: number
           updated_at: string
@@ -537,6 +545,8 @@ export type Database = {
           platform_fee_cents?: number
           product_id: string
           status?: Database["public"]["Enums"]["purchase_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           updated_at?: string
@@ -554,6 +564,8 @@ export type Database = {
           platform_fee_cents?: number
           product_id?: string
           status?: Database["public"]["Enums"]["purchase_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal_cents?: number
           tax_cents?: number
           updated_at?: string
@@ -715,6 +727,51 @@ export type Database = {
           },
         ]
       }
+      webhook_failures: {
+        Row: {
+          creator_id: string | null
+          id: string
+          product_id: string | null
+          raw_payload: Json | null
+          reason: string
+          received_at: string
+          resolved: boolean
+        }
+        Insert: {
+          creator_id?: string | null
+          id?: string
+          product_id?: string | null
+          raw_payload?: Json | null
+          reason: string
+          received_at?: string
+          resolved?: boolean
+        }
+        Update: {
+          creator_id?: string | null
+          id?: string
+          product_id?: string | null
+          raw_payload?: Json | null
+          reason?: string
+          received_at?: string
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_failures_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_failures_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -724,7 +781,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
-      creator_tier: "free" | "pro"
+      creator_subscription_tier: "free" | "creator" | "builder" | "studio"
       deployment_status: "none" | "pending" | "deploying" | "live" | "failed"
       earning_status: "pending" | "available" | "paid" | "reversed"
       payout_method: "paypal" | "wise" | "bank"
@@ -869,7 +926,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
-      creator_tier: ["free", "pro"],
+      creator_subscription_tier: ["free", "creator", "builder", "studio"],
       deployment_status: ["none", "pending", "deploying", "live", "failed"],
       earning_status: ["pending", "available", "paid", "reversed"],
       payout_method: ["paypal", "wise", "bank"],

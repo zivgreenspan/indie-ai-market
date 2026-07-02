@@ -21,6 +21,7 @@ import { Route as AccessProductIdRouteImport } from './routes/access.$productId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
+import { Route as ApiWebhooksStripeRouteImport } from './routes/api.webhooks.stripe'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
 import { Route as AuthenticatedDashboardProductsNewRouteImport } from './routes/_authenticated/dashboard.products.new'
 
@@ -84,6 +85,11 @@ const PUsernameSlugRoute = PUsernameSlugRouteImport.update({
   path: '/p/$username/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksStripeRoute = ApiWebhooksStripeRouteImport.update({
+  id: '/api/webhooks/stripe',
+  path: '/api/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardProductsRoute =
   AuthenticatedDashboardProductsRouteImport.update({
     id: '/products',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
   '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
   '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
+  '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
   '/_authenticated/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
 }
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
+    | '/api/webhooks/stripe'
     | '/p/$username/$slug'
     | '/dashboard/products/new'
   fileRoutesByTo: FileRoutesByTo
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
+    | '/api/webhooks/stripe'
     | '/p/$username/$slug'
     | '/dashboard/products/new'
   id:
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/access/$productId'
     | '/c/$username'
     | '/_authenticated/dashboard/products'
+    | '/api/webhooks/stripe'
     | '/p/$username/$slug'
     | '/_authenticated/dashboard/products/new'
   fileRoutesById: FileRoutesById
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   MyCreatorsRoute: typeof MyCreatorsRoute
   AccessProductIdRoute: typeof AccessProductIdRoute
   CUsernameRoute: typeof CUsernameRoute
+  ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute
   PUsernameSlugRoute: typeof PUsernameSlugRoute
 }
 
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PUsernameSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/stripe': {
+      id: '/api/webhooks/stripe'
+      path: '/api/webhooks/stripe'
+      fullPath: '/api/webhooks/stripe'
+      preLoaderRoute: typeof ApiWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard/products': {
       id: '/_authenticated/dashboard/products'
       path: '/products'
@@ -362,8 +382,19 @@ const rootRouteChildren: RootRouteChildren = {
   MyCreatorsRoute: MyCreatorsRoute,
   AccessProductIdRoute: AccessProductIdRoute,
   CUsernameRoute: CUsernameRoute,
+  ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
   PUsernameSlugRoute: PUsernameSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

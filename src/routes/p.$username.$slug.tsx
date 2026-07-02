@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Check, Github, ShieldCheck, Star } from "lucide-react";
+import { Check, Github, Lock, ShieldCheck, Star } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,15 @@ import { categoryLabel } from "@/lib/categories";
 import { formatPrice } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
-import { PAYMENTS_LIVE } from "@/lib/config";
 
+const TRAFFIC_LIMIT = 150;
+
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
 
 const searchSchema = z.object({
-  access: z.enum(["denied", "not-ready"]).optional(),
+  access: z.enum(["denied", "not-ready", "capped"]).optional(),
 });
 
 export const Route = createFileRoute("/p/$username/$slug")({
@@ -58,6 +62,8 @@ function ProductPage() {
       });
     } else if (access === "not-ready") {
       toast.info("This app is being set up, check back soon");
+    } else if (access === "capped") {
+      toast.error("This app has reached its visitor limit for this month");
     }
     scopedNavigate({ search: () => ({}), replace: true });
   }, [access, scopedNavigate]);
@@ -82,9 +88,18 @@ function ProductPage() {
       if (error) throw error;
       if (!product) throw notFound();
 
+      const { data: creatorProfile } = await supabase
+        .from("creator_profiles")
+        .select("creator_subscription_tier")
+        .eq("user_id", creator.id)
+        .maybeSingle();
+      const tier = creatorProfile?.creator_subscription_tier ?? "free";
+
       const { data: ratings } = await supabase
         .from("ratings")
-        .select("stars, title, body, created_at, user:profiles!ratings_user_id_fkey(username, display_name)")
+        .select(
+          "stars, title, body, created_at, user:profiles!ratings_user_id_fkey(username, display_name)",
+        )
         .eq("product_id", product.id)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -114,7 +129,21 @@ function ProductPage() {
         onWaitlist = !!wl;
       }
 
-      return { product, creator, ratings: ratings ?? [], avg, entitled, onWaitlist };
+      const trafficCapped =
+        tier === "free" &&
+        product.visit_count_month === currentMonthKey() &&
+        product.monthly_visit_count >= TRAFFIC_LIMIT;
+
+      return {
+        product,
+        creator,
+        tier,
+        ratings: ratings ?? [],
+        avg,
+        entitled,
+        onWaitlist,
+        trafficCapped,
+      };
     },
   });
 
@@ -143,14 +172,30 @@ function ProductPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  function handleBuy() {
+  const getAccessMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      if (!user) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("entitlements")
+        .upsert(
+          { user_id: user.id, product_id: productId, active: true, expires_at: null },
+          { onConflict: "user_id,product_id" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("You're in");
+      queryClient.invalidateQueries({ queryKey: ["product", username, slug] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function handleGetAccess(productId: string) {
     if (!user) {
       navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
       return;
     }
-    toast.info("Checkout isn't wired up yet", {
-      description: "Payments are still being connected.",
-    });
+    getAccessMutation.mutate(productId);
   }
 
   function handleWaitlist(productId: string, currentlyOn: boolean) {
@@ -160,7 +205,6 @@ function ProductPage() {
     }
     waitlistMutation.mutate({ productId, join: !currentlyOn });
   }
-
 
   if (isLoading) {
     return (
@@ -174,7 +218,7 @@ function ProductPage() {
   }
   if (!data) return null;
 
-  const { product, creator, ratings, avg, entitled, onWaitlist } = data;
+  const { product, creator, ratings, avg, entitled, onWaitlist, trafficCapped } = data;
 
   return (
     <div className="min-h-screen">
@@ -251,39 +295,67 @@ function ProductPage() {
                 {formatPrice(product.price_cents, product.currency, product.pricing_model)}
               </p>
               <p className="text-xs text-muted-foreground">
-                {product.pricing_model === "subscription" ? "Recurring access" : "One-time purchase, lifetime access"}
+                {product.pricing_model === "subscription"
+                  ? "Recurring access"
+                  : "One-time purchase, lifetime access"}
               </p>
 
               {entitled ? (
-                <Button asChild className="mt-5 w-full font-medium">
-                  <Link to="/access/$productId" params={{ productId: product.id }}>
-                    Open App
-                  </Link>
-                </Button>
-              ) : PAYMENTS_LIVE ? (
-                <Button className="mt-5 w-full font-medium" onClick={handleBuy}>
-                  {user ? "Buy now" : "Sign in to buy"}
-                </Button>
-              ) : (
+                trafficCapped ? (
+                  <div className="mt-5 flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-muted-foreground">
+                    <Lock className="size-4 shrink-0" />
+                    This app has reached its visitor limit for this month.
+                  </div>
+                ) : (
+                  <Button asChild className="mt-5 w-full font-medium">
+                    <Link to="/access/$productId" params={{ productId: product.id }}>
+                      Open App
+                    </Link>
+                  </Button>
+                )
+              ) : product.price_cents === 0 ? (
                 <Button
                   className="mt-5 w-full font-medium"
-                  variant={onWaitlist ? "default" : "outline"}
-                  onClick={() => handleWaitlist(product.id, onWaitlist)}
-                  disabled={waitlistMutation.isPending}
+                  onClick={() => handleGetAccess(product.id)}
+                  disabled={getAccessMutation.isPending}
                 >
-                  {!user
-                    ? "Sign in to join waitlist"
-                    : onWaitlist
-                      ? (<><Check className="mr-2 size-4" /> On waitlist — click to leave</>)
-                      : "Join waitlist"}
+                  {user ? "Get Access" : "Sign in to get access"}
                 </Button>
+              ) : product.stripe_payment_link_url ? (
+                <Button asChild className="mt-5 w-full font-medium">
+                  <a href={product.stripe_payment_link_url} target="_blank" rel="noreferrer">
+                    Buy
+                  </a>
+                </Button>
+              ) : (
+                <div className="mt-5 space-y-2">
+                  <Button className="w-full font-medium" variant="outline" disabled>
+                    Coming soon
+                  </Button>
+                  <Button
+                    className="w-full font-medium"
+                    variant={onWaitlist ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => handleWaitlist(product.id, onWaitlist)}
+                    disabled={waitlistMutation.isPending}
+                  >
+                    {!user ? (
+                      "Sign in to join waitlist"
+                    ) : onWaitlist ? (
+                      <>
+                        <Check className="mr-2 size-4" /> On waitlist — click to leave
+                      </>
+                    ) : (
+                      "Join waitlist"
+                    )}
+                  </Button>
+                </div>
               )}
 
-
-              {PAYMENTS_LIVE && (
+              {product.price_cents > 0 && (
                 <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
                   <ShieldCheck className="size-4 text-primary" />
-                  Refunds within 7 days.
+                  Payment and refunds are handled directly by the creator via Stripe.
                 </div>
               )}
             </div>

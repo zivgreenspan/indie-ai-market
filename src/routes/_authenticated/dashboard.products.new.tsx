@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,15 @@ import { useSession } from "@/hooks/use-auth";
 import { CATEGORIES, type CategoryValue } from "@/lib/categories";
 import { slugify } from "@/lib/format";
 
-const FREE_TIER_PRODUCT_LIMIT = 1;
+type Tier = "free" | "creator" | "builder" | "studio";
+
+const TIER_LIMITS: Record<Tier, number> = { free: 1, creator: 3, builder: 8, studio: Infinity };
+const TIER_LABELS: Record<Tier, string> = {
+  free: "Free",
+  creator: "Creator",
+  builder: "Builder",
+  studio: "Studio",
+};
 
 export const Route = createFileRoute("/_authenticated/dashboard/products/new")({
   head: () => ({ meta: [{ title: "New product · River" }] }),
@@ -37,37 +45,59 @@ function NewProductPage() {
     queryKey: ["product-eligibility", user?.id],
     queryFn: async () => {
       const uid = user!.id;
-      const [{ data: sub }, { count }] = await Promise.all([
-        supabase.from("creator_subscriptions").select("tier").eq("user_id", uid).maybeSingle(),
-        supabase.from("products").select("id", { count: "exact", head: true }).eq("creator_id", uid),
+      const [{ data: creator }, { count }] = await Promise.all([
+        supabase
+          .from("creator_profiles")
+          .select("creator_subscription_tier, trial_ends_at")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("creator_id", uid),
       ]);
-      const tier = sub?.tier ?? "free";
+      const tier = (creator?.creator_subscription_tier ?? "free") as Tier;
       const productCount = count ?? 0;
-      const canCreate = tier === "pro" || productCount < FREE_TIER_PRODUCT_LIMIT;
-      return { tier, productCount, canCreate };
+      const limit = TIER_LIMITS[tier];
+      const trialExpired =
+        tier === "free" && !!creator?.trial_ends_at && new Date(creator.trial_ends_at) < new Date();
+      const overLimit = productCount >= limit;
+      const canCreate = !overLimit && !trialExpired;
+      return { tier, productCount, limit, trialExpired, overLimit, canCreate };
     },
   });
 
+  const tier = eligibility?.tier ?? "free";
+  const isFree = tier === "free";
+
   function handleUpgradeInterest() {
     toast.success("You're on the list", {
-      description: "We'll email you the moment Pro upgrades open.",
+      description: "We'll email you the moment plan upgrades open.",
     });
   }
+
   const [form, setForm] = useState({
     title: "",
     tagline: "",
     description: "",
     cover_image_url: "",
     category: "productivity" as CategoryValue,
-    price: "9",
+    price: "0",
     pricing_model: "one_time" as "one_time" | "subscription",
     hosting_method: "url" as "url" | "github",
     hosted_app_url: "",
     github_repo_url: "",
     status: "draft" as "draft" | "published",
+    stripe_payment_link_url: "",
   });
 
   const githubRegex = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/;
+  const priceCents = Math.round(parseFloat(form.price || "0") * 100);
+  const isPaid = !isFree && priceCents > 0;
+  const webhookUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/webhooks/stripe`
+      : "/api/webhooks/stripe";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,10 +112,9 @@ function NewProductPage() {
       return;
     }
 
-
     setBusy(true);
     try {
-      const priceCents = Math.round(parseFloat(form.price || "0") * 100);
+      const finalPriceCents = isFree ? 0 : priceCents;
       const slug = slugify(form.title);
       if (!slug) throw new Error("Title must contain letters or numbers");
 
@@ -98,7 +127,7 @@ function NewProductPage() {
         description: form.description || null,
         cover_image_url: form.cover_image_url || null,
         category: form.category,
-        price_cents: priceCents,
+        price_cents: finalPriceCents,
         currency: "usd",
         pricing_model: form.pricing_model,
         hosted_app_url: isGithub ? null : form.hosted_app_url.trim(),
@@ -106,6 +135,10 @@ function NewProductPage() {
         deployment_status: isGithub ? "pending" : "none",
         status: form.status,
         published_at: form.status === "published" ? new Date().toISOString() : null,
+        stripe_payment_link_url:
+          !isFree && finalPriceCents > 0 && form.stripe_payment_link_url.trim()
+            ? form.stripe_payment_link_url.trim()
+            : null,
       });
 
       if (error) throw error;
@@ -114,8 +147,8 @@ function NewProductPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not save product";
       if (message.toLowerCase().includes("row-level security")) {
-        toast.error("You've hit your free plan's product limit", {
-          description: "Upgrade to Pro for unlimited products.",
+        toast.error("You've hit your plan's product limit or trial has ended", {
+          description: "Upgrade to publish more products.",
         });
       } else {
         toast.error(message);
@@ -142,17 +175,35 @@ function NewProductPage() {
           <h1 className="font-display text-3xl font-semibold">New product</h1>
           <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-8 text-center">
             <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Sparkles className="size-6" />
+              {eligibility.trialExpired ? (
+                <Clock className="size-6" />
+              ) : (
+                <Sparkles className="size-6" />
+              )}
             </div>
-            <p className="mt-4 font-display text-xl font-semibold">
-              Free plan is limited to {FREE_TIER_PRODUCT_LIMIT} product
-            </p>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              You've used your free product slot. Upgrade to Pro for unlimited products, or
-              retire your existing one first.
-            </p>
+            {eligibility.trialExpired ? (
+              <>
+                <p className="mt-4 font-display text-xl font-semibold">Your free trial has ended</p>
+                <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                  Your existing product stays live, but publishing new products needs an upgrade
+                  from the free plan.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 font-display text-xl font-semibold">
+                  {TIER_LABELS[eligibility.tier]} plan is limited to{" "}
+                  {eligibility.limit === Infinity ? "∞" : eligibility.limit} product
+                  {eligibility.limit === 1 ? "" : "s"}
+                </p>
+                <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                  You've used all of your plan's product slots. Upgrade for more room, or retire an
+                  existing product first.
+                </p>
+              </>
+            )}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Button onClick={handleUpgradeInterest}>Upgrade to Pro — $9/mo</Button>
+              <Button onClick={handleUpgradeInterest}>Upgrade plan</Button>
               <Button asChild variant="outline">
                 <Link to="/dashboard/products">Manage existing products</Link>
               </Button>
@@ -171,7 +222,10 @@ function NewProductPage() {
           Drafts stay private. Publish when you're ready for the world.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6 rounded-2xl border border-border bg-card p-6">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-6 rounded-2xl border border-border bg-card p-6"
+        >
           <div className="space-y-2">
             <Label>Title</Label>
             <Input
@@ -232,7 +286,10 @@ function NewProductPage() {
               <Label>Pricing model</Label>
               <Select
                 value={form.pricing_model}
-                onValueChange={(v) => setForm({ ...form, pricing_model: v as "one_time" | "subscription" })}
+                onValueChange={(v) =>
+                  setForm({ ...form, pricing_model: v as "one_time" | "subscription" })
+                }
+                disabled={isFree}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -250,14 +307,23 @@ function NewProductPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Price (USD)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                required
-              />
+              {isFree ? (
+                <>
+                  <Input value="0.00" disabled />
+                  <p className="text-xs text-muted-foreground">
+                    Free plan products are always free. Upgrade to charge for a product.
+                  </p>
+                </>
+              ) : (
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  required
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
@@ -275,6 +341,41 @@ function NewProductPage() {
               </Select>
             </div>
           </div>
+
+          {isPaid && (
+            <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-4">
+              <Label>Stripe Payment Link</Label>
+              <Input
+                type="url"
+                value={form.stripe_payment_link_url}
+                onChange={(e) => setForm({ ...form, stripe_payment_link_url: e.target.value })}
+                placeholder="https://buy.stripe.com/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Connect your own Stripe account and paste your Payment Link here. Buyers pay you
+                directly — River never touches this money.
+              </p>
+              <div className="rounded-lg border border-border bg-surface p-3 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">
+                  To grant access automatically after purchase:
+                </p>
+                <p className="mt-1">In your Stripe dashboard, add a webhook endpoint pointed at:</p>
+                <code className="mt-1 block break-all rounded bg-surface-2 px-2 py-1 font-mono text-[11px] text-foreground">
+                  {webhookUrl}
+                </code>
+                <p className="mt-1">
+                  Subscribe it to <span className="font-mono">checkout.session.completed</span>, set{" "}
+                  <span className="font-mono">client_reference_id</span> (or metadata) on your
+                  Payment Link to the buyer's River user ID and this product's ID, then paste the
+                  signing secret Stripe gives you into your{" "}
+                  <Link to="/become-creator" className="text-primary hover:underline">
+                    payout settings
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-4">
             <Label>How is your app hosted?</Label>
@@ -301,7 +402,9 @@ function NewProductPage() {
                 }`}
               >
                 <div className="font-medium">Upload via GitHub repo</div>
-                <div className="text-xs text-muted-foreground">We'll deploy it for you.</div>
+                <div className="text-xs text-muted-foreground">
+                  We'll deploy it for you on Vercel.
+                </div>
               </button>
             </div>
 
@@ -329,15 +432,18 @@ function NewProductPage() {
                 <ul className="space-y-1 text-xs text-muted-foreground">
                   <li>• Currently supports Next.js projects only.</li>
                   <li>• Repo must be public for now.</li>
-                  <li>• Deployment will be queued and handled by our team.</li>
+                  <li>• Deployment will be queued and handled by our team on Vercel.</li>
                 </ul>
               </div>
             )}
           </div>
 
-
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => navigate({ to: "/dashboard/products" })}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate({ to: "/dashboard/products" })}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>

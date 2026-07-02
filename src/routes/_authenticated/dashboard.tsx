@@ -1,14 +1,35 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowUpRight, CreditCard, Package, Sparkles, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  Clock,
+  CreditCard,
+  Package,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
 
-const FREE_TIER_PRODUCT_LIMIT = 1;
+type Tier = "free" | "creator" | "builder" | "studio";
+
+const TIER_LIMITS: Record<Tier, number> = { free: 1, creator: 3, builder: 8, studio: Infinity };
+const TIER_LABELS: Record<Tier, string> = {
+  free: "Free",
+  creator: "Creator",
+  builder: "Builder",
+  studio: "Studio",
+};
+const TRAFFIC_LIMIT = 150;
+
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7); // "YYYY-MM", matches Postgres to_char(now(), 'YYYY-MM')
+}
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Creator dashboard · River" }] }),
@@ -23,11 +44,13 @@ function Dashboard() {
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
       const uid = user!.id;
-      const [creator, products, follows, payout, subscription] = await Promise.all([
+      const [creator, products, follows, payout] = await Promise.all([
         supabase.from("creator_profiles").select("*").eq("user_id", uid).maybeSingle(),
         supabase
           .from("products")
-          .select("id, title, status, price_cents, currency, pricing_model, slug")
+          .select(
+            "id, title, status, price_cents, currency, pricing_model, slug, monthly_visit_count, visit_count_month",
+          )
           .eq("creator_id", uid),
         supabase
           .from("follows")
@@ -38,14 +61,12 @@ function Dashboard() {
           .select("payout_method")
           .eq("user_id", uid)
           .maybeSingle(),
-        supabase.from("creator_subscriptions").select("tier").eq("user_id", uid).maybeSingle(),
       ]);
       return {
         creator: creator.data,
         products: products.data ?? [],
         followers: follows.count ?? 0,
         payoutMethod: payout.data?.payout_method ?? null,
-        tier: subscription.data?.tier ?? "free",
       };
     },
   });
@@ -53,12 +74,22 @@ function Dashboard() {
   const payoutsReady = !!overview?.payoutMethod;
   const products = overview?.products ?? [];
   const published = products.filter((p) => p.status === "published").length;
-  const tier = overview?.tier ?? "free";
-  const isPro = tier === "pro";
+  const tier = (overview?.creator?.creator_subscription_tier ?? "free") as Tier;
+  const isFree = tier === "free";
+  const limit = TIER_LIMITS[tier];
+  const trialEndsAt = overview?.creator?.trial_ends_at ?? null;
+  const trialExpired = isFree && !!trialEndsAt && new Date(trialEndsAt) < new Date();
+
+  const month = currentMonthKey();
+  const cappedProducts = isFree
+    ? products.filter(
+        (p) => p.visit_count_month === month && p.monthly_visit_count >= TRAFFIC_LIMIT,
+      )
+    : [];
 
   function handleUpgradeInterest() {
     toast.success("You're on the list", {
-      description: "We'll email you the moment Pro upgrades open.",
+      description: "We'll email you the moment plan upgrades open.",
     });
   }
 
@@ -99,7 +130,59 @@ function Dashboard() {
         </div>
       )}
 
-      {!isLoading && !isPro && (
+      {!isLoading && trialExpired && (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-amber-500/15 p-2 text-amber-500">
+              <Clock className="size-5" />
+            </div>
+            <div>
+              <p className="font-medium">Your free trial has ended</p>
+              <p className="text-sm text-muted-foreground">
+                Upgrade to keep publishing new products. Your existing product stays live.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="font-mono text-xs uppercase"
+            onClick={handleUpgradeInterest}
+          >
+            Upgrade plan
+          </Button>
+        </div>
+      )}
+
+      {!isLoading &&
+        cappedProducts.map((p) => (
+          <div
+            key={p.id}
+            className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-destructive/15 p-2 text-destructive">
+                <AlertTriangle className="size-5" />
+              </div>
+              <div>
+                <p className="font-medium">
+                  "{p.title}" has reached the free tier traffic limit ({TRAFFIC_LIMIT}/month)
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Upgrade to keep it accessible to new visitors until the month resets.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="font-mono text-xs uppercase"
+              onClick={handleUpgradeInterest}
+            >
+              Upgrade plan
+            </Button>
+          </div>
+        ))}
+
+      {!isLoading && !trialExpired && cappedProducts.length === 0 && tier !== "studio" && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-accent/15 p-2 text-accent">
@@ -107,15 +190,21 @@ function Dashboard() {
             </div>
             <div>
               <p className="font-medium">
-                Free plan · {products.length}/{FREE_TIER_PRODUCT_LIMIT} product used
+                {TIER_LABELS[tier]} plan · {products.length}/{limit === Infinity ? "∞" : limit}{" "}
+                product
+                {limit === 1 ? "" : "s"} used
               </p>
               <p className="text-sm text-muted-foreground">
-                Upgrade to Pro for unlimited products — $9/mo.
+                Upgrade for more products and features.
               </p>
             </div>
           </div>
-          <Button variant="outline" className="font-mono text-xs uppercase" onClick={handleUpgradeInterest}>
-            Upgrade to Pro
+          <Button
+            variant="outline"
+            className="font-mono text-xs uppercase"
+            onClick={handleUpgradeInterest}
+          >
+            Upgrade plan
           </Button>
         </div>
       )}
@@ -123,8 +212,10 @@ function Dashboard() {
       <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         <Stat
           label="Plan"
-          value={isLoading ? null : isPro ? "Pro" : "Free"}
-          sub={isPro ? "Unlimited products" : `${products.length}/${FREE_TIER_PRODUCT_LIMIT} products used`}
+          value={isLoading ? null : TIER_LABELS[tier]}
+          sub={
+            limit === Infinity ? "Unlimited products" : `${products.length}/${limit} products used`
+          }
           icon={<Sparkles className="size-4" />}
         />
         <Stat
@@ -142,7 +233,7 @@ function Dashboard() {
         <Stat
           label="Revenue (MTD)"
           value="$0"
-          sub="Live once payments are enabled"
+          sub="Tracked once a creator's Stripe Payment Link sells"
           icon={<ArrowUpRight className="size-4" />}
         />
       </div>

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
+import { recordProductVisit } from "@/lib/product-visits.functions";
 
 export const Route = createFileRoute("/access/$productId")({
   ssr: false,
@@ -51,6 +52,11 @@ export const Route = createFileRoute("/access/$productId")({
 
     if (!product.hosted_app_url) {
       throw redirect({ ...productPage, search: { access: "not-ready" as const } });
+    }
+
+    const { capped } = await recordProductVisit({ data: { productId: product.id } });
+    if (capped) {
+      throw redirect({ ...productPage, search: { access: "capped" as const } });
     }
 
     return { hostedUrl: product.hosted_app_url };

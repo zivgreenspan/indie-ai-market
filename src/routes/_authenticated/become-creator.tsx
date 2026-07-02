@@ -37,6 +37,7 @@ function BecomeCreatorPage() {
   const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("later");
   const [payoutEmail, setPayoutEmail] = useState("");
   const [payoutDetails, setPayoutDetails] = useState("");
+  const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +49,7 @@ function BecomeCreatorPage() {
           payout_method: payoutMethod === "later" ? null : payoutMethod,
           payout_email: payoutMethod === "paypal" ? payoutEmail : null,
           payout_details: payoutMethod === "bank" ? payoutDetails : null,
+          stripe_webhook_secret: stripeWebhookSecret || null,
         },
       });
       toast.success("You're a creator", {
@@ -180,6 +182,30 @@ function BecomeCreatorPage() {
             <p className="text-xs text-muted-foreground">
               You can update your payout preferences anytime from your settings.
             </p>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-surface/40 p-5">
+            <h2 className="font-display text-lg font-semibold">
+              Stripe webhook (for paid products)
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              If you sell paid products with a Stripe Payment Link, add River's webhook URL in your
+              Stripe dashboard (shown when you create a paid product) and paste the signing secret
+              Stripe gives you here. This lets River verify purchases are really yours and grant
+              buyers access automatically.
+            </p>
+            <Field
+              label="Stripe webhook signing secret"
+              description="Starts with whsec_. Optional until you sell a paid product."
+            >
+              <Input
+                type="password"
+                value={stripeWebhookSecret}
+                onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                placeholder="whsec_..."
+                autoComplete="off"
+              />
+            </Field>
           </div>
 
           <div className="flex items-center justify-end pt-2">

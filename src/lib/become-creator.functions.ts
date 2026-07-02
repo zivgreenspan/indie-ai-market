@@ -11,6 +11,7 @@ const becomeCreatorSchema = z.object({
   payout_method: z.enum(["paypal", "bank"]).optional().nullable(),
   payout_email: z.string().email().optional().or(z.literal("")).nullable(),
   payout_details: z.string().max(2000).optional().nullable(),
+  stripe_webhook_secret: z.string().max(500).optional().nullable(),
 });
 
 export const becomeCreator = createServerFn({ method: "POST" })
@@ -20,6 +21,19 @@ export const becomeCreator = createServerFn({ method: "POST" })
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Only stamp subscription_started_at/trial_ends_at the first time this
+    // creator ever submits this form - re-submitting to edit a tagline
+    // shouldn't reset their trial clock, and an admin may have already
+    // moved them off the free tier.
+    const { data: existing } = await supabaseAdmin
+      .from("creator_profiles")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const now = new Date();
+    const trialEnds = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
     const { error: upsertErr } = await supabaseAdmin.from("creator_profiles").upsert(
       {
         user_id: userId,
@@ -28,6 +42,13 @@ export const becomeCreator = createServerFn({ method: "POST" })
         website: data.website || null,
         x_handle: data.x_handle || null,
         github_handle: data.github_handle || null,
+        ...(existing
+          ? {}
+          : {
+              creator_subscription_tier: "free" as const,
+              subscription_started_at: now.toISOString(),
+              trial_ends_at: trialEnds.toISOString(),
+            }),
       },
       { onConflict: "user_id" },
     );
@@ -41,25 +62,39 @@ export const becomeCreator = createServerFn({ method: "POST" })
       throw new Error(roleErr.message);
     }
 
-    // Give every new creator an explicit free-tier row so admin tooling has
-    // something to show/grant against. If one already exists (re-submitting
-    // this form, or an admin already set a tier), leave it alone.
-    const { error: subErr } = await supabaseAdmin
-      .from("creator_subscriptions")
-      .upsert({ user_id: userId, tier: "free" }, { onConflict: "user_id", ignoreDuplicates: true });
-    if (subErr) throw new Error(subErr.message);
+    // Payout destination and the Stripe webhook secret are both optional
+    // and independent of each other - a creator might come back later just
+    // to paste a webhook secret without re-entering payout details. Merge
+    // with whatever's already on file instead of blindly overwriting, so
+    // resubmitting this form can't silently wipe an earlier setting.
+    const hasNewPayoutInput = !!(data.payout_method || data.payout_email || data.payout_details);
+    const hasNewWebhookSecret = !!data.stripe_webhook_secret;
+    if (hasNewPayoutInput || hasNewWebhookSecret) {
+      const { data: existingPayout } = await supabaseAdmin
+        .from("creator_payout_details")
+        .select("payout_method, payout_email, payout_details, stripe_webhook_secret")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    // Payout destination is entirely optional at this stage - only write a
-    // row if the creator actually gave us something to go on. "Set up
-    // later" (no payout_method) with blank fields should not create a row.
-    const hasPayoutInput = !!(data.payout_method || data.payout_email || data.payout_details);
-    if (hasPayoutInput) {
       const { error: payoutErr } = await supabaseAdmin.from("creator_payout_details").upsert(
         {
           user_id: userId,
-          payout_method: data.payout_method || null,
-          payout_email: data.payout_email || null,
-          payout_details: data.payout_details ? { notes: data.payout_details } : null,
+          payout_method: hasNewPayoutInput
+            ? data.payout_method || null
+            : (existingPayout?.payout_method ?? null),
+          payout_email: hasNewPayoutInput
+            ? data.payout_method === "paypal"
+              ? data.payout_email || null
+              : null
+            : (existingPayout?.payout_email ?? null),
+          payout_details: hasNewPayoutInput
+            ? data.payout_details
+              ? { notes: data.payout_details }
+              : null
+            : (existingPayout?.payout_details ?? null),
+          stripe_webhook_secret: hasNewWebhookSecret
+            ? data.stripe_webhook_secret
+            : (existingPayout?.stripe_webhook_secret ?? null),
         },
         { onConflict: "user_id" },
       );

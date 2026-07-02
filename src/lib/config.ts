@@ -1,5 +1,6 @@
-// Flip this once Paddle (or whatever processor we land on) is actually wired
-// up and taking real charges. Until then, product pages show a waitlist CTA
-// instead of a buy button, and entitlements only come from admin manual
-// grants (see /admin → Users) or a future payment webhook.
+// Superseded by the per-creator "bring your own Stripe Payment Link" model:
+// paid products now go live per-product as soon as a creator pastes a
+// Payment Link (see products.stripe_payment_link_url), not via a single
+// River-wide processor switch. Kept as a harmless export in case anything
+// still imports it; no longer read anywhere in the app.
 export const PAYMENTS_LIVE = false;
