@@ -48,6 +48,7 @@ function ProductPage() {
   const navigate = useNavigate();
   const scopedNavigate = Route.useNavigate();
   const { user } = useSession();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!access) return;
@@ -62,7 +63,7 @@ function ProductPage() {
   }, [access, scopedNavigate]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["product", username, slug],
+    queryKey: ["product", username, slug, user?.id],
     queryFn: async () => {
       const { data: creator } = await supabase
         .from("profiles")
@@ -94,6 +95,7 @@ function ProductPage() {
           : null;
 
       let entitled = false;
+      let onWaitlist = false;
       if (user) {
         const { data: ent } = await supabase
           .from("entitlements")
@@ -102,10 +104,43 @@ function ProductPage() {
           .eq("product_id", product.id)
           .maybeSingle();
         entitled = !!ent?.active && (!ent.expires_at || new Date(ent.expires_at) > new Date());
+
+        const { data: wl } = await supabase
+          .from("waitlist_signups")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("product_id", product.id)
+          .maybeSingle();
+        onWaitlist = !!wl;
       }
 
-      return { product, creator, ratings: ratings ?? [], avg, entitled };
+      return { product, creator, ratings: ratings ?? [], avg, entitled, onWaitlist };
     },
+  });
+
+  const waitlistMutation = useMutation({
+    mutationFn: async ({ productId, join }: { productId: string; join: boolean }) => {
+      if (!user) throw new Error("Not signed in");
+      if (join) {
+        const { error } = await supabase
+          .from("waitlist_signups")
+          .insert({ user_id: user.id, product_id: productId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("waitlist_signups")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", productId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.join ? "You're on the list" : "Removed from waitlist");
+      queryClient.invalidateQueries({ queryKey: ["product", username, slug] });
+      queryClient.invalidateQueries({ queryKey: ["waitlist", user?.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   function handleBuy() {
@@ -118,15 +153,14 @@ function ProductPage() {
     });
   }
 
-  function handleWaitlist() {
+  function handleWaitlist(productId: string, currentlyOn: boolean) {
     if (!user) {
       navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
       return;
     }
-    toast.success("You're on the list", {
-      description: "We'll email you the moment purchases open.",
-    });
+    waitlistMutation.mutate({ productId, join: !currentlyOn });
   }
+
 
   if (isLoading) {
     return (
