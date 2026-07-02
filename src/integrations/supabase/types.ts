@@ -223,36 +223,6 @@ export type Database = {
           },
         ]
       }
-      creator_subscriptions: {
-        Row: {
-          created_at: string
-          current_period_end: string | null
-          source: string
-          stripe_subscription_id: string | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          current_period_end?: string | null
-          source?: string
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          current_period_end?: string | null
-          source?: string
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       entitlements: {
         Row: {
           active: boolean
@@ -720,7 +690,6 @@ export type Database = {
       purchase_status: "active" | "canceled" | "refunded" | "past_due"
       report_status: "open" | "reviewing" | "resolved" | "dismissed"
       report_target: "product" | "rating" | "comment" | "creator"
-      subscription_tier: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -866,7 +835,6 @@ export const Constants = {
       purchase_status: ["active", "canceled", "refunded", "past_due"],
       report_status: ["open", "reviewing", "resolved", "dismissed"],
       report_target: ["product", "rating", "comment", "creator"],
-      subscription_tier: ["free", "pro"],
     },
   },
 } as const
