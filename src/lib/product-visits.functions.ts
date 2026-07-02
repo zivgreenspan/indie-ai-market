@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const TRAFFIC_LIMIT = 150;
 
@@ -14,10 +15,33 @@ function currentMonthKey() {
 // traffic cap. Runs with the service role since a random buyer isn't the
 // product owner and has no RLS UPDATE grant on the products row - this is
 // the one narrow, server-verified write we allow on their behalf.
+//
+// Gated by requireSupabaseAuth + an explicit entitlement check below: this
+// is a directly POST-able server function, not just a client route, so
+// /access/$productId's own beforeLoad checks don't protect it - anyone who
+// knows a productId could otherwise call it repeatedly to inflate
+// monthly_visit_count and force a competitor's free-tier app into its
+// traffic cap early, locking out real paying customers. Requiring the
+// caller to hold an active entitlement for this exact product means only a
+// genuine access (one that already cost the caller a purchase or a
+// legitimate free claim) can move the counter.
 export const recordProductVisit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => schema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: entitlement } = await supabaseAdmin
+      .from("entitlements")
+      .select("active, expires_at")
+      .eq("user_id", userId)
+      .eq("product_id", data.productId)
+      .maybeSingle();
+    const isEntitled =
+      !!entitlement?.active &&
+      (!entitlement.expires_at || new Date(entitlement.expires_at) > new Date());
+    if (!isEntitled) throw new Error("Not entitled to this product");
 
     const { data: product, error: productErr } = await supabaseAdmin
       .from("products")
