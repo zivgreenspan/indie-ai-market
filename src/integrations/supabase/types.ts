@@ -226,28 +226,19 @@ export type Database = {
       creator_subscriptions: {
         Row: {
           created_at: string
-          current_period_end: string | null
-          source: string
-          stripe_subscription_id: string | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
+          tier: Database["public"]["Enums"]["creator_tier"]
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          current_period_end?: string | null
-          source?: string
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
+          tier?: Database["public"]["Enums"]["creator_tier"]
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          current_period_end?: string | null
-          source?: string
-          stripe_subscription_id?: string | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
+          tier?: Database["public"]["Enums"]["creator_tier"]
           updated_at?: string
           user_id?: string
         }
@@ -695,6 +686,35 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_signups: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_signups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -704,6 +724,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "creator" | "admin"
+      creator_tier: "free" | "pro"
       deployment_status: "none" | "pending" | "deploying" | "live" | "failed"
       earning_status: "pending" | "available" | "paid" | "reversed"
       payout_method: "paypal" | "wise" | "bank"
@@ -720,7 +741,6 @@ export type Database = {
       purchase_status: "active" | "canceled" | "refunded" | "past_due"
       report_status: "open" | "reviewing" | "resolved" | "dismissed"
       report_target: "product" | "rating" | "comment" | "creator"
-      subscription_tier: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -849,6 +869,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "creator", "admin"],
+      creator_tier: ["free", "pro"],
       deployment_status: ["none", "pending", "deploying", "live", "failed"],
       earning_status: ["pending", "available", "paid", "reversed"],
       payout_method: ["paypal", "wise", "bank"],
@@ -866,7 +887,6 @@ export const Constants = {
       purchase_status: ["active", "canceled", "refunded", "past_due"],
       report_status: ["open", "reviewing", "resolved", "dismissed"],
       report_target: ["product", "rating", "comment", "creator"],
-      subscription_tier: ["free", "pro"],
     },
   },
 } as const

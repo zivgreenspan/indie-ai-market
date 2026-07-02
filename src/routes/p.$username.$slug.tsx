@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Github, ShieldCheck, Star } from "lucide-react";
+import { Check, Github, ShieldCheck, Star } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { PAYMENTS_LIVE } from "@/lib/config";
+
 
 const searchSchema = z.object({
   access: z.enum(["denied", "not-ready"]).optional(),
@@ -47,6 +48,7 @@ function ProductPage() {
   const navigate = useNavigate();
   const scopedNavigate = Route.useNavigate();
   const { user } = useSession();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!access) return;
@@ -61,7 +63,7 @@ function ProductPage() {
   }, [access, scopedNavigate]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["product", username, slug],
+    queryKey: ["product", username, slug, user?.id],
     queryFn: async () => {
       const { data: creator } = await supabase
         .from("profiles")
@@ -93,6 +95,7 @@ function ProductPage() {
           : null;
 
       let entitled = false;
+      let onWaitlist = false;
       if (user) {
         const { data: ent } = await supabase
           .from("entitlements")
@@ -101,10 +104,43 @@ function ProductPage() {
           .eq("product_id", product.id)
           .maybeSingle();
         entitled = !!ent?.active && (!ent.expires_at || new Date(ent.expires_at) > new Date());
+
+        const { data: wl } = await supabase
+          .from("waitlist_signups")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("product_id", product.id)
+          .maybeSingle();
+        onWaitlist = !!wl;
       }
 
-      return { product, creator, ratings: ratings ?? [], avg, entitled };
+      return { product, creator, ratings: ratings ?? [], avg, entitled, onWaitlist };
     },
+  });
+
+  const waitlistMutation = useMutation({
+    mutationFn: async ({ productId, join }: { productId: string; join: boolean }) => {
+      if (!user) throw new Error("Not signed in");
+      if (join) {
+        const { error } = await supabase
+          .from("waitlist_signups")
+          .insert({ user_id: user.id, product_id: productId });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("waitlist_signups")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", productId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.join ? "You're on the list" : "Removed from waitlist");
+      queryClient.invalidateQueries({ queryKey: ["product", username, slug] });
+      queryClient.invalidateQueries({ queryKey: ["waitlist", user?.id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   function handleBuy() {
@@ -117,15 +153,14 @@ function ProductPage() {
     });
   }
 
-  function handleWaitlist() {
+  function handleWaitlist(productId: string, currentlyOn: boolean) {
     if (!user) {
       navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
       return;
     }
-    toast.success("You're on the list", {
-      description: "We'll email you the moment purchases open.",
-    });
+    waitlistMutation.mutate({ productId, join: !currentlyOn });
   }
+
 
   if (isLoading) {
     return (
@@ -139,7 +174,7 @@ function ProductPage() {
   }
   if (!data) return null;
 
-  const { product, creator, ratings, avg, entitled } = data;
+  const { product, creator, ratings, avg, entitled, onWaitlist } = data;
 
   return (
     <div className="min-h-screen">
@@ -232,12 +267,18 @@ function ProductPage() {
               ) : (
                 <Button
                   className="mt-5 w-full font-medium"
-                  variant="outline"
-                  onClick={handleWaitlist}
+                  variant={onWaitlist ? "default" : "outline"}
+                  onClick={() => handleWaitlist(product.id, onWaitlist)}
+                  disabled={waitlistMutation.isPending}
                 >
-                  {user ? "Join waitlist" : "Sign in to join waitlist"}
+                  {!user
+                    ? "Sign in to join waitlist"
+                    : onWaitlist
+                      ? (<><Check className="mr-2 size-4" /> On waitlist — click to leave</>)
+                      : "Join waitlist"}
                 </Button>
               )}
+
 
               {PAYMENTS_LIVE && (
                 <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
