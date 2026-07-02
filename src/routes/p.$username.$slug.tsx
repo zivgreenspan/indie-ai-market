@@ -174,7 +174,7 @@ function ProductPage() {
   }
   if (!data) return null;
 
-  const { product, creator, ratings, avg, entitled } = data;
+  const { product, creator, ratings, avg, entitled, onWaitlist } = data;
 
   return (
     <div className="min-h-screen">
