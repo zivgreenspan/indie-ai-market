@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Github, ShieldCheck, Star } from "lucide-react";
+import { Check, Github, ShieldCheck, Star } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { PAYMENTS_LIVE } from "@/lib/config";
+
 
 const searchSchema = z.object({
   access: z.enum(["denied", "not-ready"]).optional(),
