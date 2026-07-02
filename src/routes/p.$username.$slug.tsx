@@ -267,12 +267,18 @@ function ProductPage() {
               ) : (
                 <Button
                   className="mt-5 w-full font-medium"
-                  variant="outline"
-                  onClick={handleWaitlist}
+                  variant={onWaitlist ? "default" : "outline"}
+                  onClick={() => handleWaitlist(product.id, onWaitlist)}
+                  disabled={waitlistMutation.isPending}
                 >
-                  {user ? "Join waitlist" : "Sign in to join waitlist"}
+                  {!user
+                    ? "Sign in to join waitlist"
+                    : onWaitlist
+                      ? (<><Check className="mr-2 size-4" /> On waitlist — click to leave</>)
+                      : "Join waitlist"}
                 </Button>
               )}
+
 
               {PAYMENTS_LIVE && (
                 <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
