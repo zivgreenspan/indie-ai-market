@@ -109,10 +109,56 @@ function LibraryPage() {
           ))}
         </div>
       )}
+
+      {user && !sessionLoading && (
+        <section className="mt-14">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-surface p-2 text-muted-foreground">
+              <Clock className="size-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-2xl font-semibold">Waitlists</h2>
+              <p className="text-sm text-muted-foreground">
+                Products you've asked to be notified about.
+              </p>
+            </div>
+          </div>
+
+          {waitlistLoading ? (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-72 rounded-2xl bg-surface" />
+              ))}
+            </div>
+          ) : !waitlist || waitlist.length === 0 ? (
+            <p className="mt-6 rounded-2xl border border-dashed border-border bg-surface/30 p-8 text-center text-sm text-muted-foreground">
+              You're not on any waitlists yet.
+            </p>
+          ) : (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {waitlist.map(({ signupId, product }) => (
+                <div key={signupId} className="relative">
+                  <ProductCard product={product} />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute right-3 top-3 gap-1"
+                    onClick={() => leaveWaitlist.mutate(signupId)}
+                    disabled={leaveWaitlist.isPending}
+                  >
+                    <X className="size-3.5" /> Leave
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
     </>
   );
 }
+
 
 function SignInPrompt({ title, description }: { title: string; description: string }) {
   return (
