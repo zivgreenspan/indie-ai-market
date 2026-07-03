@@ -1,911 +1,897 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
       comments: {
         Row: {
-          body: string
-          created_at: string
-          id: string
-          parent_id: string | null
-          product_id: string
-          updated_at: string
-          user_id: string
-        }
+          body: string;
+          created_at: string;
+          id: string;
+          parent_id: string | null;
+          product_id: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          body: string
-          created_at?: string
-          id?: string
-          parent_id?: string | null
-          product_id: string
-          updated_at?: string
-          user_id: string
-        }
+          body: string;
+          created_at?: string;
+          id?: string;
+          parent_id?: string | null;
+          product_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          body?: string
-          created_at?: string
-          id?: string
-          parent_id?: string | null
-          product_id?: string
-          updated_at?: string
-          user_id?: string
-        }
+          body?: string;
+          created_at?: string;
+          id?: string;
+          parent_id?: string | null;
+          product_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "comments_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "comments"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "comments_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "comments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       creator_earnings: {
         Row: {
-          available_at: string
-          created_at: string
-          creator_id: string
-          currency: string
-          gross_cents: number
-          id: string
-          net_cents: number
-          notes: string | null
-          payout_id: string | null
-          platform_fee_cents: number
-          processor_fee_cents: number
-          product_id: string
-          purchase_id: string
-          status: Database["public"]["Enums"]["earning_status"]
-          updated_at: string
-        }
+          available_at: string;
+          created_at: string;
+          creator_id: string;
+          currency: string;
+          gross_cents: number;
+          id: string;
+          net_cents: number;
+          notes: string | null;
+          payout_id: string | null;
+          platform_fee_cents: number;
+          processor_fee_cents: number;
+          product_id: string;
+          purchase_id: string;
+          status: Database["public"]["Enums"]["earning_status"];
+          updated_at: string;
+        };
         Insert: {
-          available_at: string
-          created_at?: string
-          creator_id: string
-          currency?: string
-          gross_cents: number
-          id?: string
-          net_cents: number
-          notes?: string | null
-          payout_id?: string | null
-          platform_fee_cents: number
-          processor_fee_cents?: number
-          product_id: string
-          purchase_id: string
-          status?: Database["public"]["Enums"]["earning_status"]
-          updated_at?: string
-        }
+          available_at: string;
+          created_at?: string;
+          creator_id: string;
+          currency?: string;
+          gross_cents: number;
+          id?: string;
+          net_cents: number;
+          notes?: string | null;
+          payout_id?: string | null;
+          platform_fee_cents: number;
+          processor_fee_cents?: number;
+          product_id: string;
+          purchase_id: string;
+          status?: Database["public"]["Enums"]["earning_status"];
+          updated_at?: string;
+        };
         Update: {
-          available_at?: string
-          created_at?: string
-          creator_id?: string
-          currency?: string
-          gross_cents?: number
-          id?: string
-          net_cents?: number
-          notes?: string | null
-          payout_id?: string | null
-          platform_fee_cents?: number
-          processor_fee_cents?: number
-          product_id?: string
-          purchase_id?: string
-          status?: Database["public"]["Enums"]["earning_status"]
-          updated_at?: string
-        }
+          available_at?: string;
+          created_at?: string;
+          creator_id?: string;
+          currency?: string;
+          gross_cents?: number;
+          id?: string;
+          net_cents?: number;
+          notes?: string | null;
+          payout_id?: string | null;
+          platform_fee_cents?: number;
+          processor_fee_cents?: number;
+          product_id?: string;
+          purchase_id?: string;
+          status?: Database["public"]["Enums"]["earning_status"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "creator_earnings_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "creator_earnings_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "creator_earnings_payout_fk"
-            columns: ["payout_id"]
-            isOneToOne: false
-            referencedRelation: "payouts"
-            referencedColumns: ["id"]
+            foreignKeyName: "creator_earnings_payout_fk";
+            columns: ["payout_id"];
+            isOneToOne: false;
+            referencedRelation: "payouts";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "creator_earnings_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "creator_earnings_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "creator_earnings_purchase_id_fkey"
-            columns: ["purchase_id"]
-            isOneToOne: true
-            referencedRelation: "purchases"
-            referencedColumns: ["id"]
+            foreignKeyName: "creator_earnings_purchase_id_fkey";
+            columns: ["purchase_id"];
+            isOneToOne: true;
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       creator_payout_details: {
         Row: {
-          created_at: string
-          payout_details: Json | null
-          payout_email: string | null
-          payout_method: Database["public"]["Enums"]["payout_method"] | null
-          stripe_webhook_secret: string | null
-          updated_at: string
-          user_id: string
-        }
+          created_at: string;
+          payout_details: Json | null;
+          payout_email: string | null;
+          payout_method: Database["public"]["Enums"]["payout_method"] | null;
+          stripe_webhook_secret: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          payout_details?: Json | null
-          payout_email?: string | null
-          payout_method?: Database["public"]["Enums"]["payout_method"] | null
-          stripe_webhook_secret?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          created_at?: string;
+          payout_details?: Json | null;
+          payout_email?: string | null;
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null;
+          stripe_webhook_secret?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          payout_details?: Json | null
-          payout_email?: string | null
-          payout_method?: Database["public"]["Enums"]["payout_method"] | null
-          stripe_webhook_secret?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          payout_details?: Json | null;
+          payout_email?: string | null;
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null;
+          stripe_webhook_secret?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       creator_profiles: {
         Row: {
-          created_at: string
-          creator_subscription_tier: Database["public"]["Enums"]["creator_subscription_tier"]
-          custom_subdomain: string | null
-          github_handle: string | null
-          is_suspended: boolean
-          long_bio: string | null
-          onboarded_at: string | null
-          subscription_started_at: string | null
-          tagline: string | null
-          trial_ends_at: string | null
-          updated_at: string
-          user_id: string
-          website: string | null
-          x_handle: string | null
-        }
+          created_at: string;
+          creator_subscription_tier: Database["public"]["Enums"]["creator_subscription_tier"];
+          custom_subdomain: string | null;
+          github_handle: string | null;
+          is_suspended: boolean;
+          long_bio: string | null;
+          onboarded_at: string | null;
+          platform_link: string | null;
+          platform_type: string | null;
+          subscription_started_at: string | null;
+          tagline: string | null;
+          trial_ends_at: string | null;
+          updated_at: string;
+          user_id: string;
+          x_handle: string | null;
+        };
         Insert: {
-          created_at?: string
-          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"]
-          custom_subdomain?: string | null
-          github_handle?: string | null
-          is_suspended?: boolean
-          long_bio?: string | null
-          onboarded_at?: string | null
-          subscription_started_at?: string | null
-          tagline?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-          user_id: string
-          website?: string | null
-          x_handle?: string | null
-        }
+          created_at?: string;
+          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"];
+          custom_subdomain?: string | null;
+          github_handle?: string | null;
+          is_suspended?: boolean;
+          long_bio?: string | null;
+          onboarded_at?: string | null;
+          platform_link?: string | null;
+          platform_type?: string | null;
+          subscription_started_at?: string | null;
+          tagline?: string | null;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+          x_handle?: string | null;
+        };
         Update: {
-          created_at?: string
-          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"]
-          custom_subdomain?: string | null
-          github_handle?: string | null
-          is_suspended?: boolean
-          long_bio?: string | null
-          onboarded_at?: string | null
-          subscription_started_at?: string | null
-          tagline?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-          user_id?: string
-          website?: string | null
-          x_handle?: string | null
-        }
+          created_at?: string;
+          creator_subscription_tier?: Database["public"]["Enums"]["creator_subscription_tier"];
+          custom_subdomain?: string | null;
+          github_handle?: string | null;
+          is_suspended?: boolean;
+          long_bio?: string | null;
+          onboarded_at?: string | null;
+          platform_link?: string | null;
+          platform_type?: string | null;
+          subscription_started_at?: string | null;
+          tagline?: string | null;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          x_handle?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "creator_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "creator_profiles_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       entitlements: {
         Row: {
-          active: boolean
-          created_at: string
-          expires_at: string | null
-          id: string
-          product_id: string
-          source_purchase_id: string | null
-          updated_at: string
-          user_id: string
-        }
+          active: boolean;
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          product_id: string;
+          source_purchase_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          active?: boolean
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          product_id: string
-          source_purchase_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          active?: boolean;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          product_id: string;
+          source_purchase_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          active?: boolean
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          product_id?: string
-          source_purchase_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
+          active?: boolean;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          product_id?: string;
+          source_purchase_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "entitlements_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "entitlements_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "entitlements_source_purchase_id_fkey"
-            columns: ["source_purchase_id"]
-            isOneToOne: false
-            referencedRelation: "purchases"
-            referencedColumns: ["id"]
+            foreignKeyName: "entitlements_source_purchase_id_fkey";
+            columns: ["source_purchase_id"];
+            isOneToOne: false;
+            referencedRelation: "purchases";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "entitlements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "entitlements_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       follows: {
         Row: {
-          created_at: string
-          creator_id: string
-          follower_id: string
-        }
+          created_at: string;
+          creator_id: string;
+          follower_id: string;
+        };
         Insert: {
-          created_at?: string
-          creator_id: string
-          follower_id: string
-        }
+          created_at?: string;
+          creator_id: string;
+          follower_id: string;
+        };
         Update: {
-          created_at?: string
-          creator_id?: string
-          follower_id?: string
-        }
+          created_at?: string;
+          creator_id?: string;
+          follower_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "follows_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "follows_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "follows_follower_id_fkey"
-            columns: ["follower_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "follows_follower_id_fkey";
+            columns: ["follower_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       payouts: {
         Row: {
-          amount_cents: number
-          created_at: string
-          creator_id: string
-          currency: string
-          destination: string
-          id: string
-          method: Database["public"]["Enums"]["payout_method"]
-          notes: string | null
-          period_end: string | null
-          period_start: string | null
-          processed_at: string | null
-          reference: string | null
-          status: Database["public"]["Enums"]["payout_status"]
-          updated_at: string
-        }
+          amount_cents: number;
+          created_at: string;
+          creator_id: string;
+          currency: string;
+          destination: string;
+          id: string;
+          method: Database["public"]["Enums"]["payout_method"];
+          notes: string | null;
+          period_end: string | null;
+          period_start: string | null;
+          processed_at: string | null;
+          reference: string | null;
+          status: Database["public"]["Enums"]["payout_status"];
+          updated_at: string;
+        };
         Insert: {
-          amount_cents: number
-          created_at?: string
-          creator_id: string
-          currency?: string
-          destination: string
-          id?: string
-          method: Database["public"]["Enums"]["payout_method"]
-          notes?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          processed_at?: string | null
-          reference?: string | null
-          status?: Database["public"]["Enums"]["payout_status"]
-          updated_at?: string
-        }
+          amount_cents: number;
+          created_at?: string;
+          creator_id: string;
+          currency?: string;
+          destination: string;
+          id?: string;
+          method: Database["public"]["Enums"]["payout_method"];
+          notes?: string | null;
+          period_end?: string | null;
+          period_start?: string | null;
+          processed_at?: string | null;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["payout_status"];
+          updated_at?: string;
+        };
         Update: {
-          amount_cents?: number
-          created_at?: string
-          creator_id?: string
-          currency?: string
-          destination?: string
-          id?: string
-          method?: Database["public"]["Enums"]["payout_method"]
-          notes?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          processed_at?: string | null
-          reference?: string | null
-          status?: Database["public"]["Enums"]["payout_status"]
-          updated_at?: string
-        }
+          amount_cents?: number;
+          created_at?: string;
+          creator_id?: string;
+          currency?: string;
+          destination?: string;
+          id?: string;
+          method?: Database["public"]["Enums"]["payout_method"];
+          notes?: string | null;
+          period_end?: string | null;
+          period_start?: string | null;
+          processed_at?: string | null;
+          reference?: string | null;
+          status?: Database["public"]["Enums"]["payout_status"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "payouts_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "payouts_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       products: {
         Row: {
-          category: Database["public"]["Enums"]["product_category"]
-          cover_image_url: string | null
-          created_at: string
-          creator_id: string
-          currency: string
-          deployment_provider: string
-          deployment_status: Database["public"]["Enums"]["deployment_status"]
-          description: string | null
-          featured: boolean
-          gallery: string[]
-          github_repo_url: string | null
-          hosted_app_url: string | null
-          id: string
-          monthly_visit_count: number
-          price_cents: number
-          pricing_model: Database["public"]["Enums"]["pricing_model"]
-          published_at: string | null
-          slug: string
-          status: Database["public"]["Enums"]["product_status"]
-          stripe_payment_link_url: string | null
-          tagline: string | null
-          tags: string[]
-          title: string
-          updated_at: string
-          visit_count_month: string
-        }
+          category: Database["public"]["Enums"]["product_category"];
+          cover_image_url: string | null;
+          created_at: string;
+          creator_id: string;
+          currency: string;
+          deployment_provider: string;
+          deployment_status: Database["public"]["Enums"]["deployment_status"];
+          description: string | null;
+          featured: boolean;
+          gallery: string[];
+          github_repo_url: string | null;
+          hosted_app_url: string | null;
+          id: string;
+          monthly_visit_count: number;
+          price_cents: number;
+          pricing_model: Database["public"]["Enums"]["pricing_model"];
+          published_at: string | null;
+          slug: string;
+          status: Database["public"]["Enums"]["product_status"];
+          stripe_payment_link_url: string | null;
+          tagline: string | null;
+          tags: string[];
+          title: string;
+          updated_at: string;
+          visit_count_month: string;
+        };
         Insert: {
-          category?: Database["public"]["Enums"]["product_category"]
-          cover_image_url?: string | null
-          created_at?: string
-          creator_id: string
-          currency?: string
-          deployment_provider?: string
-          deployment_status?: Database["public"]["Enums"]["deployment_status"]
-          description?: string | null
-          featured?: boolean
-          gallery?: string[]
-          github_repo_url?: string | null
-          hosted_app_url?: string | null
-          id?: string
-          monthly_visit_count?: number
-          price_cents: number
-          pricing_model?: Database["public"]["Enums"]["pricing_model"]
-          published_at?: string | null
-          slug: string
-          status?: Database["public"]["Enums"]["product_status"]
-          stripe_payment_link_url?: string | null
-          tagline?: string | null
-          tags?: string[]
-          title: string
-          updated_at?: string
-          visit_count_month?: string
-        }
+          category?: Database["public"]["Enums"]["product_category"];
+          cover_image_url?: string | null;
+          created_at?: string;
+          creator_id: string;
+          currency?: string;
+          deployment_provider?: string;
+          deployment_status?: Database["public"]["Enums"]["deployment_status"];
+          description?: string | null;
+          featured?: boolean;
+          gallery?: string[];
+          github_repo_url?: string | null;
+          hosted_app_url?: string | null;
+          id?: string;
+          monthly_visit_count?: number;
+          price_cents: number;
+          pricing_model?: Database["public"]["Enums"]["pricing_model"];
+          published_at?: string | null;
+          slug: string;
+          status?: Database["public"]["Enums"]["product_status"];
+          stripe_payment_link_url?: string | null;
+          tagline?: string | null;
+          tags?: string[];
+          title: string;
+          updated_at?: string;
+          visit_count_month?: string;
+        };
         Update: {
-          category?: Database["public"]["Enums"]["product_category"]
-          cover_image_url?: string | null
-          created_at?: string
-          creator_id?: string
-          currency?: string
-          deployment_provider?: string
-          deployment_status?: Database["public"]["Enums"]["deployment_status"]
-          description?: string | null
-          featured?: boolean
-          gallery?: string[]
-          github_repo_url?: string | null
-          hosted_app_url?: string | null
-          id?: string
-          monthly_visit_count?: number
-          price_cents?: number
-          pricing_model?: Database["public"]["Enums"]["pricing_model"]
-          published_at?: string | null
-          slug?: string
-          status?: Database["public"]["Enums"]["product_status"]
-          stripe_payment_link_url?: string | null
-          tagline?: string | null
-          tags?: string[]
-          title?: string
-          updated_at?: string
-          visit_count_month?: string
-        }
+          category?: Database["public"]["Enums"]["product_category"];
+          cover_image_url?: string | null;
+          created_at?: string;
+          creator_id?: string;
+          currency?: string;
+          deployment_provider?: string;
+          deployment_status?: Database["public"]["Enums"]["deployment_status"];
+          description?: string | null;
+          featured?: boolean;
+          gallery?: string[];
+          github_repo_url?: string | null;
+          hosted_app_url?: string | null;
+          id?: string;
+          monthly_visit_count?: number;
+          price_cents?: number;
+          pricing_model?: Database["public"]["Enums"]["pricing_model"];
+          published_at?: string | null;
+          slug?: string;
+          status?: Database["public"]["Enums"]["product_status"];
+          stripe_payment_link_url?: string | null;
+          tagline?: string | null;
+          tags?: string[];
+          title?: string;
+          updated_at?: string;
+          visit_count_month?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "products_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "products_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       profiles: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string
-          display_name: string
-          id: string
-          updated_at: string
-          username: string
-        }
+          avatar_url: string | null;
+          bio: string | null;
+          created_at: string;
+          display_name: string;
+          id: string;
+          updated_at: string;
+          username: string;
+        };
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name: string
-          id: string
-          updated_at?: string
-          username: string
-        }
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          display_name: string;
+          id: string;
+          updated_at?: string;
+          username: string;
+        };
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string
-          display_name?: string
-          id?: string
-          updated_at?: string
-          username?: string
-        }
-        Relationships: []
-      }
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          display_name?: string;
+          id?: string;
+          updated_at?: string;
+          username?: string;
+        };
+        Relationships: [];
+      };
       purchases: {
         Row: {
-          amount_cents: number
-          created_at: string
-          currency: string
-          current_period_end: string | null
-          id: string
-          platform_fee_cents: number
-          product_id: string
-          status: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id: string | null
-          stripe_payment_intent_id: string | null
-          subtotal_cents: number
-          tax_cents: number
-          updated_at: string
-          user_id: string
-        }
+          amount_cents: number;
+          created_at: string;
+          currency: string;
+          current_period_end: string | null;
+          id: string;
+          platform_fee_cents: number;
+          product_id: string;
+          status: Database["public"]["Enums"]["purchase_status"];
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          subtotal_cents: number;
+          tax_cents: number;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          amount_cents: number
-          created_at?: string
-          currency?: string
-          current_period_end?: string | null
-          id?: string
-          platform_fee_cents?: number
-          product_id: string
-          status?: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          subtotal_cents?: number
-          tax_cents?: number
-          updated_at?: string
-          user_id: string
-        }
+          amount_cents: number;
+          created_at?: string;
+          currency?: string;
+          current_period_end?: string | null;
+          id?: string;
+          platform_fee_cents?: number;
+          product_id: string;
+          status?: Database["public"]["Enums"]["purchase_status"];
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          subtotal_cents?: number;
+          tax_cents?: number;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          amount_cents?: number
-          created_at?: string
-          currency?: string
-          current_period_end?: string | null
-          id?: string
-          platform_fee_cents?: number
-          product_id?: string
-          status?: Database["public"]["Enums"]["purchase_status"]
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          subtotal_cents?: number
-          tax_cents?: number
-          updated_at?: string
-          user_id?: string
-        }
+          amount_cents?: number;
+          created_at?: string;
+          currency?: string;
+          current_period_end?: string | null;
+          id?: string;
+          platform_fee_cents?: number;
+          product_id?: string;
+          status?: Database["public"]["Enums"]["purchase_status"];
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          subtotal_cents?: number;
+          tax_cents?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "purchases_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "purchases_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "purchases_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "purchases_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       ratings: {
         Row: {
-          body: string | null
-          created_at: string
-          id: string
-          product_id: string
-          stars: number
-          title: string | null
-          updated_at: string
-          user_id: string
-        }
+          body: string | null;
+          created_at: string;
+          id: string;
+          product_id: string;
+          stars: number;
+          title: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          body?: string | null
-          created_at?: string
-          id?: string
-          product_id: string
-          stars: number
-          title?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          stars: number;
+          title?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          body?: string | null
-          created_at?: string
-          id?: string
-          product_id?: string
-          stars?: number
-          title?: string | null
-          updated_at?: string
-          user_id?: string
-        }
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          stars?: number;
+          title?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "ratings_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "ratings_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "ratings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "ratings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       reports: {
         Row: {
-          created_at: string
-          id: string
-          reason: string
-          reporter_id: string
-          status: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: Database["public"]["Enums"]["report_target"]
-          updated_at: string
-        }
+          created_at: string;
+          id: string;
+          reason: string;
+          reporter_id: string;
+          status: Database["public"]["Enums"]["report_status"];
+          target_id: string;
+          target_type: Database["public"]["Enums"]["report_target"];
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          reason: string
-          reporter_id: string
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: Database["public"]["Enums"]["report_target"]
-          updated_at?: string
-        }
+          created_at?: string;
+          id?: string;
+          reason: string;
+          reporter_id: string;
+          status?: Database["public"]["Enums"]["report_status"];
+          target_id: string;
+          target_type: Database["public"]["Enums"]["report_target"];
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          reason?: string
-          reporter_id?: string
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id?: string
-          target_type?: Database["public"]["Enums"]["report_target"]
-          updated_at?: string
-        }
+          created_at?: string;
+          id?: string;
+          reason?: string;
+          reporter_id?: string;
+          status?: Database["public"]["Enums"]["report_status"];
+          target_id?: string;
+          target_type?: Database["public"]["Enums"]["report_target"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "reports_reporter_id_fkey";
+            columns: ["reporter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_roles: {
         Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          created_at: string;
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          created_at?: string;
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       waitlist_signups: {
         Row: {
-          created_at: string
-          id: string
-          product_id: string
-          user_id: string
-        }
+          created_at: string;
+          id: string;
+          product_id: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          product_id: string
-          user_id: string
-        }
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          product_id?: string
-          user_id?: string
-        }
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "waitlist_signups_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "waitlist_signups_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       webhook_failures: {
         Row: {
-          creator_id: string | null
-          id: string
-          product_id: string | null
-          raw_payload: Json | null
-          reason: string
-          received_at: string
-          resolved: boolean
-        }
+          creator_id: string | null;
+          id: string;
+          product_id: string | null;
+          raw_payload: Json | null;
+          reason: string;
+          received_at: string;
+          resolved: boolean;
+        };
         Insert: {
-          creator_id?: string | null
-          id?: string
-          product_id?: string | null
-          raw_payload?: Json | null
-          reason: string
-          received_at?: string
-          resolved?: boolean
-        }
+          creator_id?: string | null;
+          id?: string;
+          product_id?: string | null;
+          raw_payload?: Json | null;
+          reason: string;
+          received_at?: string;
+          resolved?: boolean;
+        };
         Update: {
-          creator_id?: string | null
-          id?: string
-          product_id?: string | null
-          raw_payload?: Json | null
-          reason?: string
-          received_at?: string
-          resolved?: boolean
-        }
+          creator_id?: string | null;
+          id?: string;
+          product_id?: string | null;
+          raw_payload?: Json | null;
+          reason?: string;
+          received_at?: string;
+          resolved?: boolean;
+        };
         Relationships: [
           {
-            foreignKeyName: "webhook_failures_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
+            foreignKeyName: "webhook_failures_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "webhook_failures_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "webhook_failures_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      app_role: "user" | "creator" | "admin"
-      creator_subscription_tier: "free" | "creator" | "builder" | "studio"
-      deployment_status: "none" | "pending" | "deploying" | "live" | "failed"
-      earning_status: "pending" | "available" | "paid" | "reversed"
-      payout_method: "paypal" | "wise" | "bank"
-      payout_status: "pending" | "processing" | "paid" | "failed"
-      pricing_model: "one_time" | "subscription"
+      app_role: "user" | "creator" | "admin";
+      creator_subscription_tier: "free" | "creator" | "builder" | "studio";
+      deployment_status: "none" | "pending" | "deploying" | "live" | "failed";
+      earning_status: "pending" | "available" | "paid" | "reversed";
+      payout_method: "paypal" | "wise" | "bank";
+      payout_status: "pending" | "processing" | "paid" | "failed";
+      pricing_model: "one_time" | "subscription";
       product_category:
-        | "productivity"
-        | "creative_tools"
-        | "developer_tools"
-        | "finance"
-        | "education"
-        | "other"
-      product_status: "draft" | "published" | "unlisted" | "removed"
-      purchase_status: "active" | "canceled" | "refunded" | "past_due"
-      report_status: "open" | "reviewing" | "resolved" | "dismissed"
-      report_target: "product" | "rating" | "comment" | "creator"
-    }
+        "productivity" | "creative_tools" | "developer_tools" | "finance" | "education" | "other";
+      product_status: "draft" | "published" | "unlisted" | "removed";
+      purchase_status: "active" | "canceled" | "refunded" | "past_due";
+      report_status: "open" | "reviewing" | "resolved" | "dismissed";
+      report_target: "product" | "rating" | "comment" | "creator";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -931,4 +917,4 @@ export const Constants = {
       report_target: ["product", "rating", "comment", "creator"],
     },
   },
-} as const
+} as const;

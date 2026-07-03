@@ -2,10 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const PLATFORM_TYPES = ["instagram", "youtube", "tiktok", "x", "custom"] as const;
+
 const becomeCreatorSchema = z.object({
   tagline: z.string().min(4).max(140),
   long_bio: z.string().max(2000).optional().nullable(),
-  website: z.string().url().optional().or(z.literal("")).nullable(),
+  platform_type: z.enum(PLATFORM_TYPES).optional().nullable(),
+  platform_link: z.string().max(300).optional().or(z.literal("")).nullable(),
   x_handle: z.string().max(60).optional().nullable(),
   github_handle: z.string().max(60).optional().nullable(),
   payout_method: z.enum(["paypal", "bank"]).optional().nullable(),
@@ -39,7 +42,8 @@ export const becomeCreator = createServerFn({ method: "POST" })
         user_id: userId,
         tagline: data.tagline,
         long_bio: data.long_bio || null,
-        website: data.website || null,
+        platform_type: data.platform_type || null,
+        platform_link: data.platform_link || null,
         x_handle: data.x_handle || null,
         github_handle: data.github_handle || null,
         ...(existing

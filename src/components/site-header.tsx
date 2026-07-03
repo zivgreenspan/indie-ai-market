@@ -67,6 +67,17 @@ export function SiteHeader() {
           >
             Library
           </Link>
+          {isCreator && (
+            <Link
+              to="/dashboard"
+              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
+              activeProps={{
+                className: "rounded-md px-3 py-1.5 text-sm text-foreground bg-surface",
+              }}
+            >
+              Dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -81,7 +92,9 @@ export function SiteHeader() {
                   <span className="inline-flex size-7 items-center justify-center rounded-full bg-surface-2 font-mono text-xs">
                     {(profile?.display_name ?? user.email ?? "?").slice(0, 1).toUpperCase()}
                   </span>
-                  <span className="hidden text-sm sm:inline">{profile?.display_name ?? "Account"}</span>
+                  <span className="hidden text-sm sm:inline">
+                    {profile?.display_name ?? "Account"}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -100,11 +113,10 @@ export function SiteHeader() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                {isCreator ? (
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard">Creator dashboard</Link>
-                  </DropdownMenuItem>
-                ) : (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">Settings</Link>
+                </DropdownMenuItem>
+                {!isCreator && (
                   <DropdownMenuItem asChild>
                     <Link to="/become-creator">
                       <Plus className="mr-2 size-4" /> Become a creator

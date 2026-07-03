@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Github, Globe, Twitter } from "lucide-react";
+import { Github, Globe, Instagram, Music2, Twitter, Youtube } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { ProductCard, type ProductCardData } from "@/components/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,7 +29,10 @@ function NotFound() {
       <SiteHeader />
       <div className="container-page py-24 text-center">
         <h1 className="font-display text-4xl font-semibold">Creator not found</h1>
-        <Link to="/" className="mt-4 inline-block text-sm text-primary underline-offset-4 hover:underline">
+        <Link
+          to="/"
+          className="mt-4 inline-block text-sm text-primary underline-offset-4 hover:underline"
+        >
           Back to discover
         </Link>
       </div>
@@ -49,7 +52,7 @@ function CreatorPage() {
       const { data: profile, error } = await supabase
         .from("profiles")
         .select(
-          "id, username, display_name, avatar_url, bio, creator_profiles(tagline, long_bio, website, x_handle, github_handle)",
+          "id, username, display_name, avatar_url, bio, creator_profiles(tagline, long_bio, platform_type, platform_link, x_handle, github_handle)",
         )
         .eq("username", username)
         .maybeSingle();
@@ -65,7 +68,10 @@ function CreatorPage() {
           .eq("creator_id", profile.id)
           .eq("status", "published")
           .order("published_at", { ascending: false }),
-        supabase.from("follows").select("follower_id", { count: "exact", head: true }).eq("creator_id", profile.id),
+        supabase
+          .from("follows")
+          .select("follower_id", { count: "exact", head: true })
+          .eq("creator_id", profile.id),
       ]);
 
       const enriched: ProductCardData[] = (products ?? []).map((p) => ({
@@ -101,10 +107,15 @@ function CreatorPage() {
     setFollowBusy(true);
     try {
       if (isFollowing) {
-        await supabase.from("follows").delete().match({ follower_id: user.id, creator_id: data.profile.id });
+        await supabase
+          .from("follows")
+          .delete()
+          .match({ follower_id: user.id, creator_id: data.profile.id });
         setIsFollowing(false);
       } else {
-        await supabase.from("follows").insert({ follower_id: user.id, creator_id: data.profile.id });
+        await supabase
+          .from("follows")
+          .insert({ follower_id: user.id, creator_id: data.profile.id });
         setIsFollowing(true);
       }
     } catch (err) {
@@ -132,7 +143,9 @@ function CreatorPage() {
                   <h1 className="font-display text-3xl font-semibold tracking-tight">
                     {data.profile.display_name}
                   </h1>
-                  <p className="font-mono text-sm text-muted-foreground">@{data.profile.username}</p>
+                  <p className="font-mono text-sm text-muted-foreground">
+                    @{data.profile.username}
+                  </p>
                   {data.profile.creator_profiles?.tagline && (
                     <p className="mt-3 max-w-xl text-sm">{data.profile.creator_profiles.tagline}</p>
                   )}
@@ -140,16 +153,23 @@ function CreatorPage() {
                     <span>
                       <span className="font-mono text-foreground">{data.followers}</span> followers
                     </span>
-                    {data.profile.creator_profiles?.website && (
-                      <a
-                        href={data.profile.creator_profiles.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                      >
-                        <Globe className="size-3" /> Website
-                      </a>
-                    )}
+                    {data.profile.creator_profiles?.platform_link &&
+                      (/^https?:\/\//.test(data.profile.creator_profiles.platform_link) ? (
+                        <a
+                          href={data.profile.creator_profiles.platform_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 hover:text-foreground"
+                        >
+                          <PlatformIcon type={data.profile.creator_profiles.platform_type} />
+                          {data.profile.creator_profiles.platform_link}
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1">
+                          <PlatformIcon type={data.profile.creator_profiles.platform_type} />
+                          {data.profile.creator_profiles.platform_link}
+                        </span>
+                      ))}
                     {data.profile.creator_profiles?.x_handle && (
                       <span className="inline-flex items-center gap-1">
                         <Twitter className="size-3" /> {data.profile.creator_profiles.x_handle}
@@ -198,4 +218,19 @@ function CreatorPage() {
       </section>
     </div>
   );
+}
+
+function PlatformIcon({ type }: { type: string | null }) {
+  switch (type) {
+    case "instagram":
+      return <Instagram className="size-3" />;
+    case "youtube":
+      return <Youtube className="size-3" />;
+    case "tiktok":
+      return <Music2 className="size-3" />;
+    case "x":
+      return <Twitter className="size-3" />;
+    default:
+      return <Globe className="size-3" />;
+  }
 }

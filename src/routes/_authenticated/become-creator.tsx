@@ -17,6 +17,15 @@ import {
 import { becomeCreator } from "@/lib/become-creator.functions";
 
 type PayoutMethod = "paypal" | "bank" | "later";
+type PlatformType = "instagram" | "youtube" | "tiktok" | "x" | "custom";
+
+const PLATFORM_OPTIONS: { value: PlatformType; label: string; placeholder: string }[] = [
+  { value: "instagram", label: "Instagram", placeholder: "@yourhandle or full profile URL" },
+  { value: "youtube", label: "YouTube", placeholder: "Channel URL" },
+  { value: "tiktok", label: "TikTok", placeholder: "@yourhandle or full profile URL" },
+  { value: "x", label: "X (Twitter)", placeholder: "@yourhandle or full profile URL" },
+  { value: "custom", label: "Website / other link", placeholder: "https://yoursite.com" },
+];
 
 export const Route = createFileRoute("/_authenticated/become-creator")({
   head: () => ({ meta: [{ title: "Become a creator · River" }] }),
@@ -30,10 +39,11 @@ function BecomeCreatorPage() {
   const [form, setForm] = useState({
     tagline: "",
     long_bio: "",
-    website: "",
+    platform_link: "",
     x_handle: "",
     github_handle: "",
   });
+  const [platformType, setPlatformType] = useState<PlatformType>("instagram");
   const [payoutMethod, setPayoutMethod] = useState<PayoutMethod>("later");
   const [payoutEmail, setPayoutEmail] = useState("");
   const [payoutDetails, setPayoutDetails] = useState("");
@@ -46,6 +56,7 @@ function BecomeCreatorPage() {
       await submit({
         data: {
           ...form,
+          platform_type: platformType,
           payout_method: payoutMethod === "later" ? null : payoutMethod,
           payout_email: payoutMethod === "paypal" ? payoutEmail : null,
           payout_details: payoutMethod === "bank" ? payoutDetails : null,
@@ -104,14 +115,33 @@ function BecomeCreatorPage() {
           </Field>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Website">
+            <Field label="Main platform" description="Where do people find you?">
+              <Select
+                value={platformType}
+                onValueChange={(v) => setPlatformType(v as PlatformType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={PLATFORM_OPTIONS.find((p) => p.value === platformType)?.label ?? "Link"}>
               <Input
-                value={form.website}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-                placeholder="https://yoursite.com"
-                type="url"
+                value={form.platform_link}
+                onChange={(e) => setForm({ ...form, platform_link: e.target.value })}
+                placeholder={PLATFORM_OPTIONS.find((p) => p.value === platformType)?.placeholder}
               />
             </Field>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="X / Twitter handle">
               <Input
                 value={form.x_handle}
@@ -119,14 +149,14 @@ function BecomeCreatorPage() {
                 placeholder="@you"
               />
             </Field>
+            <Field label="GitHub handle">
+              <Input
+                value={form.github_handle}
+                onChange={(e) => setForm({ ...form, github_handle: e.target.value })}
+                placeholder="@you"
+              />
+            </Field>
           </div>
-          <Field label="GitHub handle">
-            <Input
-              value={form.github_handle}
-              onChange={(e) => setForm({ ...form, github_handle: e.target.value })}
-              placeholder="@you"
-            />
-          </Field>
 
           <div className="space-y-2 border-t border-border pt-6">
             <p className="text-sm text-muted-foreground">

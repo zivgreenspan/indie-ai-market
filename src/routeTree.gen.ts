@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CUsernameRouteImport } from './routes/c.$username'
 import { Route as AccessProductIdRouteImport } from './routes/access.$productId'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
@@ -69,6 +70,11 @@ const AccessProductIdRoute = AccessProductIdRouteImport.update({
   path: '/access/$productId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/my-creators': typeof MyCreatorsRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/my-creators': typeof MyCreatorsRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/my-creators': typeof MyCreatorsRoute
   '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/become-creator'
     | '/dashboard'
+    | '/settings'
     | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/become-creator'
     | '/dashboard'
+    | '/settings'
     | '/access/$productId'
     | '/c/$username'
     | '/dashboard/products'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/my-creators'
     | '/_authenticated/become-creator'
     | '/_authenticated/dashboard'
+    | '/_authenticated/settings'
     | '/access/$productId'
     | '/c/$username'
     | '/_authenticated/dashboard/products'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -362,11 +381,13 @@ const AuthenticatedDashboardRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBecomeCreatorRoute: typeof AuthenticatedBecomeCreatorRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRouteWithChildren
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBecomeCreatorRoute: AuthenticatedBecomeCreatorRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRouteWithChildren,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
