@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,21 +71,21 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
-      // Direct Supabase OAuth (not Lovable's managed auth proxy) - that flow
-      // only handles redirects for domains registered in Lovable Cloud, so
-      // it breaks on any other host (e.g. this app running on Vercel).
-      // Requires Google enabled under Supabase Auth -> Providers, with this
-      // deployment's URL added to Auth -> URL Configuration.
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.href },
+      // Lovable's managed OAuth proxy (@lovable.dev/cloud-auth-js) - only
+      // recognizes domains registered in this Lovable project, so it won't
+      // work if this app is deployed elsewhere (e.g. Vercel) until that's
+      // set up separately. Using it here because it works out of the box
+      // with zero Google Cloud Console setup for the Lovable-hosted domain.
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) {
-        toast.error(error.message ?? "Google sign-in failed");
+      if (result.error) {
+        toast.error(result.error.message ?? "Google sign-in failed");
         setBusy(false);
         return;
       }
-      // On success the browser is already navigating to Google; nothing left to do here.
+      if (result.redirected) return;
+      navigate({ to: redirect ?? "/", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setBusy(false);
@@ -106,7 +107,8 @@ function AuthPage() {
         </Link>
         <div className="space-y-4">
           <p className="font-display text-3xl font-semibold leading-tight">
-            "I shipped my first AI-built app and made $1.2k in the first week. The audience was already there."
+            "I shipped my first AI-built app and made $1.2k in the first week. The audience was
+            already there."
           </p>
           <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             — A creator we made up so you'd take us seriously
