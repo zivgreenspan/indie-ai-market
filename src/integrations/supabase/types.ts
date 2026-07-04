@@ -401,6 +401,7 @@ export type Database = {
           price_cents: number;
           pricing_model: Database["public"]["Enums"]["pricing_model"];
           published_at: string | null;
+          rejection_reason: string | null;
           slug: string;
           status: Database["public"]["Enums"]["product_status"];
           stripe_payment_link_url: string | null;
@@ -428,6 +429,7 @@ export type Database = {
           price_cents: number;
           pricing_model?: Database["public"]["Enums"]["pricing_model"];
           published_at?: string | null;
+          rejection_reason?: string | null;
           slug: string;
           status?: Database["public"]["Enums"]["product_status"];
           stripe_payment_link_url?: string | null;
@@ -455,6 +457,7 @@ export type Database = {
           price_cents?: number;
           pricing_model?: Database["public"]["Enums"]["pricing_model"];
           published_at?: string | null;
+          rejection_reason?: string | null;
           slug?: string;
           status?: Database["public"]["Enums"]["product_status"];
           stripe_payment_link_url?: string | null;
@@ -771,7 +774,7 @@ export type Database = {
       pricing_model: "one_time" | "subscription";
       product_category:
         "productivity" | "creative_tools" | "developer_tools" | "finance" | "education" | "other";
-      product_status: "draft" | "published" | "unlisted" | "removed";
+      product_status: "draft" | "published" | "unlisted" | "removed" | "rejected";
       purchase_status: "active" | "canceled" | "refunded" | "past_due";
       report_status: "open" | "reviewing" | "resolved" | "dismissed";
       report_target: "product" | "rating" | "comment" | "creator";
@@ -911,7 +914,7 @@ export const Constants = {
         "education",
         "other",
       ],
-      product_status: ["draft", "published", "unlisted", "removed"],
+      product_status: ["draft", "published", "unlisted", "removed", "rejected"],
       purchase_status: ["active", "canceled", "refunded", "past_due"],
       report_status: ["open", "reviewing", "resolved", "dismissed"],
       report_target: ["product", "rating", "comment", "creator"],

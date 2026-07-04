@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,9 +14,12 @@ export const Route = createFileRoute("/_authenticated/dashboard/products/")({
   component: ProductsList,
 });
 
+type ProductStatus = "draft" | "published" | "unlisted" | "removed" | "rejected";
+
 function ProductsList() {
   const { user } = useSession();
   const { profile } = useProfile(user?.id);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     enabled: !!user,
@@ -29,6 +33,26 @@ function ProductsList() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ProductStatus }) => {
+      const { error } = await supabase.from("products").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      const label =
+        variables.status === "published"
+          ? "Published"
+          : variables.status === "unlisted"
+            ? "Taken down"
+            : variables.status === "draft"
+              ? "Moved to draft"
+              : "Updated";
+      toast.success(label);
+      queryClient.invalidateQueries({ queryKey: ["my-products", user?.id] });
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   return (
@@ -80,21 +104,58 @@ function ProductsList() {
                   </td>
                   <td className="px-4 py-3">
                     <StatusPill status={p.status} />
+                    {p.status === "rejected" && p.rejection_reason && (
+                      <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                        Reason: {p.rejection_reason}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <DeploymentPill status={p.deployment_status} />
                   </td>
 
                   <td className="px-4 py-3 text-right">
-                    {p.status === "published" && profile && (
-                      <Link
-                        to="/p/$username/$slug"
-                        params={{ username: profile.username, slug: p.slug }}
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        View <ExternalLink className="size-3" />
-                      </Link>
-                    )}
+                    <div className="flex items-center justify-end gap-3">
+                      {p.status === "published" && profile && (
+                        <Link
+                          to="/p/$username/$slug"
+                          params={{ username: profile.username, slug: p.slug }}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          View <ExternalLink className="size-3" />
+                        </Link>
+                      )}
+                      {p.status === "published" && (
+                        <button
+                          type="button"
+                          disabled={setStatus.isPending}
+                          onClick={() => setStatus.mutate({ id: p.id, status: "unlisted" })}
+                          className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+                        >
+                          Take down
+                        </button>
+                      )}
+                      {(p.status === "unlisted" || p.status === "draft") && (
+                        <button
+                          type="button"
+                          disabled={setStatus.isPending}
+                          onClick={() => setStatus.mutate({ id: p.id, status: "published" })}
+                          className="text-xs text-accent hover:underline disabled:opacity-50"
+                        >
+                          Publish
+                        </button>
+                      )}
+                      {p.status === "rejected" && (
+                        <button
+                          type="button"
+                          disabled={setStatus.isPending}
+                          onClick={() => setStatus.mutate({ id: p.id, status: "draft" })}
+                          className="text-xs text-accent hover:underline disabled:opacity-50"
+                        >
+                          Move to draft
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -112,6 +173,7 @@ function StatusPill({ status }: { status: string }) {
     draft: "bg-surface-2 text-muted-foreground",
     unlisted: "bg-warning/15 text-warning",
     removed: "bg-destructive/15 text-destructive",
+    rejected: "bg-destructive/15 text-destructive",
   };
   return (
     <span

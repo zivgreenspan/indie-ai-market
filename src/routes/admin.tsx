@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -165,9 +167,15 @@ function StatusPill({ value }: { value: string }) {
       ? "bg-primary/15 text-primary"
       : value === "available"
         ? "bg-accent/15 text-accent"
-        : value === "open" || value === "pending"
-          ? "bg-surface-2 text-muted-foreground"
-          : "bg-surface-2 text-muted-foreground";
+        : value === "published" || value === "active" || value === "resolved" || value === "live"
+          ? "bg-success/15 text-success"
+          : value === "unlisted"
+            ? "bg-warning/15 text-warning"
+            : value === "removed" || value === "rejected" || value === "suspended"
+              ? "bg-destructive/15 text-destructive"
+              : value === "open" || value === "pending"
+                ? "bg-surface-2 text-muted-foreground"
+                : "bg-surface-2 text-muted-foreground";
   return <span className={`inline-flex rounded-full px-2 py-0.5 font-mono text-xs uppercase ${cls}`}>{value}</span>;
 }
 
@@ -598,14 +606,21 @@ function CreatorsSection() {
 }
 
 /* ============== PRODUCTS ============== */
+type ProductStatusPatch = "draft" | "published" | "unlisted" | "removed" | "rejected";
+
 function ProductsSection() {
   const qc = useQueryClient();
+  const [rejecting, setRejecting] = useState<{ id: string; title: string } | null>(null);
+  const [reason, setReason] = useState("");
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "products"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, slug, status, featured, price_cents, currency, pricing_model, creator:profiles!products_creator_id_fkey(username)")
+        .select(
+          "id, title, slug, status, rejection_reason, featured, price_cents, currency, pricing_model, creator:profiles!products_creator_id_fkey(username)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -613,45 +628,104 @@ function ProductsSection() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: { featured?: boolean; status?: "draft" | "published" | "unlisted" | "removed" } }) => {
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: { featured?: boolean; status?: ProductStatusPatch; rejection_reason?: string | null };
+    }) => {
       const { error } = await supabase.from("products").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Updated");
       qc.invalidateQueries({ queryKey: ["admin", "products"] });
+      setRejecting(null);
+      setReason("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  function submitReject() {
+    if (!rejecting) return;
+    update.mutate({
+      id: rejecting.id,
+      patch: { status: "rejected", rejection_reason: reason.trim() || null },
+    });
+  }
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   return (
-    <TableShell>
-      <thead className="border-b border-border bg-surface">
-        <tr><Th>Creator</Th><Th>Product</Th><Th>Price</Th><Th>Status</Th><Th>Featured</Th><Th>Actions</Th></tr>
-      </thead>
-      <tbody className="divide-y divide-border">
-        {(data ?? []).map((p) => (
-          <tr key={p.id}>
-            <Td>@{p.creator?.username ?? "—"}</Td>
-            <Td>{p.title}</Td>
-            <Td className="font-mono text-accent">{formatPrice(p.price_cents, p.currency, p.pricing_model)}</Td>
-            <Td><StatusPill value={p.status} /></Td>
-            <Td>{p.featured ? <span className="font-mono text-xs text-accent">★ FEATURED</span> : <span className="text-muted-foreground text-xs">—</span>}</Td>
-            <Td>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant={p.featured ? "outline" : "default"} onClick={() => update.mutate({ id: p.id, patch: { featured: !p.featured } })}>
-                  {p.featured ? "Unfeature" : "Feature"}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => update.mutate({ id: p.id, patch: { status: "unlisted" } })}>Unlist</Button>
-                <Button size="sm" variant="outline" onClick={() => update.mutate({ id: p.id, patch: { status: "removed" } })}>Remove</Button>
-              </div>
-            </Td>
-          </tr>
-        ))}
-        {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No products.</span></Td></tr>}
-      </tbody>
-    </TableShell>
+    <>
+      <TableShell>
+        <thead className="border-b border-border bg-surface">
+          <tr><Th>Creator</Th><Th>Product</Th><Th>Price</Th><Th>Status</Th><Th>Featured</Th><Th>Actions</Th></tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {(data ?? []).map((p) => (
+            <tr key={p.id}>
+              <Td>@{p.creator?.username ?? "—"}</Td>
+              <Td>{p.title}</Td>
+              <Td className="font-mono text-accent">{formatPrice(p.price_cents, p.currency, p.pricing_model)}</Td>
+              <Td>
+                <StatusPill value={p.status} />
+                {p.status === "rejected" && p.rejection_reason && (
+                  <p className="mt-1 max-w-[16rem] text-xs text-muted-foreground">{p.rejection_reason}</p>
+                )}
+              </Td>
+              <Td>{p.featured ? <span className="font-mono text-xs text-accent">★ FEATURED</span> : <span className="text-muted-foreground text-xs">—</span>}</Td>
+              <Td>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant={p.featured ? "outline" : "default"} onClick={() => update.mutate({ id: p.id, patch: { featured: !p.featured } })}>
+                    {p.featured ? "Unfeature" : "Feature"}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => update.mutate({ id: p.id, patch: { status: "unlisted" } })}>Unlist</Button>
+                  <Button size="sm" variant="outline" onClick={() => update.mutate({ id: p.id, patch: { status: "removed" } })}>Remove</Button>
+                  {p.status === "rejected" ? (
+                    <Button size="sm" variant="outline" onClick={() => update.mutate({ id: p.id, patch: { status: "draft", rejection_reason: null } })}>
+                      Clear rejection
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="destructive" onClick={() => { setReason(""); setRejecting({ id: p.id, title: p.title }); }}>
+                      Reject
+                    </Button>
+                  )}
+                </div>
+              </Td>
+            </tr>
+          ))}
+          {(!data || data.length === 0) && <tr><Td className="text-muted-foreground"><span>No products.</span></Td></tr>}
+        </tbody>
+      </TableShell>
+
+      <Dialog open={!!rejecting} onOpenChange={(open) => !open && setRejecting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject "{rejecting?.title}"</DialogTitle>
+            <DialogDescription>
+              The creator will see this product marked as rejected, along with your note.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="rejection-reason">Reason (optional)</Label>
+            <Textarea
+              id="rejection-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Screenshots don't match the live product"
+              rows={4}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setRejecting(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={update.isPending} onClick={submitReject}>
+              Reject product
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
