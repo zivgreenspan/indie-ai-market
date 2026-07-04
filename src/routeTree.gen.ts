@@ -21,9 +21,11 @@ import { Route as AccessProductIdRouteImport } from './routes/access.$productId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
+import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
 import { Route as ApiWebhooksStripeRouteImport } from './routes/api.webhooks.stripe'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as AuthenticatedDashboardProductsIndexRouteImport } from './routes/_authenticated/dashboard.products.index'
 import { Route as AuthenticatedDashboardProductsNewRouteImport } from './routes/_authenticated/dashboard.products.new'
 
 const MyCreatorsRoute = MyCreatorsRouteImport.update({
@@ -86,6 +88,12 @@ const AuthenticatedBecomeCreatorRoute =
     path: '/become-creator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardIndexRoute =
+  AuthenticatedDashboardIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const PUsernameSlugRoute = PUsernameSlugRouteImport.update({
   id: '/p/$username/$slug',
   path: '/p/$username/$slug',
@@ -101,6 +109,12 @@ const AuthenticatedDashboardProductsRoute =
     id: '/products',
     path: '/products',
     getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardProductsIndexRoute =
+  AuthenticatedDashboardProductsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDashboardProductsRoute,
   } as any)
 const AuthenticatedDashboardProductsNewRoute =
   AuthenticatedDashboardProductsNewRouteImport.update({
@@ -124,7 +138,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
+  '/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,14 +150,14 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/my-creators': typeof MyCreatorsRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
-  '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
-  '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
+  '/dashboard/products': typeof AuthenticatedDashboardProductsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,7 +176,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
+  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/dashboard/products/new': typeof AuthenticatedDashboardProductsNewRoute
+  '/_authenticated/dashboard/products/': typeof AuthenticatedDashboardProductsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -179,7 +197,9 @@ export interface FileRouteTypes {
     | '/dashboard/products'
     | '/api/webhooks/stripe'
     | '/p/$username/$slug'
+    | '/dashboard/'
     | '/dashboard/products/new'
+    | '/dashboard/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,14 +209,14 @@ export interface FileRouteTypes {
     | '/library'
     | '/my-creators'
     | '/become-creator'
-    | '/dashboard'
     | '/settings'
     | '/access/$productId'
     | '/c/$username'
-    | '/dashboard/products'
     | '/api/webhooks/stripe'
     | '/p/$username/$slug'
+    | '/dashboard'
     | '/dashboard/products/new'
+    | '/dashboard/products'
   id:
     | '__root__'
     | '/'
@@ -214,7 +234,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/products'
     | '/api/webhooks/stripe'
     | '/p/$username/$slug'
+    | '/_authenticated/dashboard/'
     | '/_authenticated/dashboard/products/new'
+    | '/_authenticated/dashboard/products/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -317,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBecomeCreatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/': {
+      id: '/_authenticated/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/p/$username/$slug': {
       id: '/p/$username/$slug'
       path: '/p/$username/$slug'
@@ -338,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/products/': {
+      id: '/_authenticated/dashboard/products/'
+      path: '/'
+      fullPath: '/dashboard/products/'
+      preLoaderRoute: typeof AuthenticatedDashboardProductsIndexRouteImport
+      parentRoute: typeof AuthenticatedDashboardProductsRoute
+    }
     '/_authenticated/dashboard/products/new': {
       id: '/_authenticated/dashboard/products/new'
       path: '/new'
@@ -350,12 +386,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDashboardProductsRouteChildren {
   AuthenticatedDashboardProductsNewRoute: typeof AuthenticatedDashboardProductsNewRoute
+  AuthenticatedDashboardProductsIndexRoute: typeof AuthenticatedDashboardProductsIndexRoute
 }
 
 const AuthenticatedDashboardProductsRouteChildren: AuthenticatedDashboardProductsRouteChildren =
   {
     AuthenticatedDashboardProductsNewRoute:
       AuthenticatedDashboardProductsNewRoute,
+    AuthenticatedDashboardProductsIndexRoute:
+      AuthenticatedDashboardProductsIndexRoute,
   }
 
 const AuthenticatedDashboardProductsRouteWithChildren =
@@ -365,12 +404,14 @@ const AuthenticatedDashboardProductsRouteWithChildren =
 
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardProductsRoute: typeof AuthenticatedDashboardProductsRouteWithChildren
+  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
     AuthenticatedDashboardProductsRoute:
       AuthenticatedDashboardProductsRouteWithChildren,
+    AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   }
 
 const AuthenticatedDashboardRouteWithChildren =
