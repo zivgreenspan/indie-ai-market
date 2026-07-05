@@ -188,6 +188,7 @@ export type Database = {
           is_suspended: boolean
           long_bio: string | null
           onboarded_at: string | null
+          paddle_subscription_id: string | null
           platform_link: string | null
           platform_type: string | null
           subscription_started_at: string | null
@@ -205,6 +206,7 @@ export type Database = {
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
+          paddle_subscription_id?: string | null
           platform_link?: string | null
           platform_type?: string | null
           subscription_started_at?: string | null
@@ -222,6 +224,7 @@ export type Database = {
           is_suspended?: boolean
           long_bio?: string | null
           onboarded_at?: string | null
+          paddle_subscription_id?: string | null
           platform_link?: string | null
           platform_type?: string | null
           subscription_started_at?: string | null

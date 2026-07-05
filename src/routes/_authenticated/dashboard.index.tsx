@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -15,8 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
+import { getPaddleConfig } from "@/lib/billing.functions";
 
 type Tier = "free" | "creator" | "builder" | "studio";
+type PaidTier = "creator" | "builder" | "studio";
 
 const TIER_LIMITS: Record<Tier, number> = { free: 1, creator: 3, builder: 8, studio: Infinity };
 const TIER_LABELS: Record<Tier, string> = {
@@ -25,7 +29,23 @@ const TIER_LABELS: Record<Tier, string> = {
   builder: "Builder",
   studio: "Studio",
 };
+const TIER_ORDER: Record<Tier, number> = { free: 0, creator: 1, builder: 2, studio: 3 };
+const PADDLE_PLANS: { value: PaidTier; price: number; blurb: string }[] = [
+  { value: "creator", price: 9, blurb: "Up to 3 products" },
+  { value: "builder", price: 19, blurb: "Up to 8 products" },
+  { value: "studio", price: 29, blurb: "Unlimited products" },
+];
 const TRAFFIC_LIMIT = 150;
+
+declare global {
+  interface Window {
+    Paddle?: {
+      Environment: { set: (env: string) => void };
+      Initialize: (options: { token: string }) => void;
+      Checkout: { open: (options: Record<string, unknown>) => void };
+    };
+  }
+}
 
 function currentMonthKey() {
   return new Date().toISOString().slice(0, 7); // "YYYY-MM", matches Postgres to_char(now(), 'YYYY-MM')
@@ -87,10 +107,53 @@ function Dashboard() {
       )
     : [];
 
-  function handleUpgradeInterest() {
-    toast.success("You're on the list", {
-      description: "We'll email you the moment plan upgrades open.",
+  const getConfig = useServerFn(getPaddleConfig);
+  const { data: paddleConfig } = useQuery({
+    enabled: !!user,
+    queryKey: ["paddle-config"],
+    queryFn: () => getConfig(),
+    staleTime: Infinity,
+  });
+
+  const paddleReady = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.Paddle) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  function openCheckout(targetTier: PaidTier) {
+    if (!user) return;
+    if (!paddleConfig?.clientToken) {
+      toast.error("Billing isn't configured yet - check back soon.");
+      return;
+    }
+    const priceId = paddleConfig.prices[targetTier];
+    if (!priceId) {
+      toast.error("This plan isn't available yet.");
+      return;
+    }
+    const Paddle = window.Paddle;
+    if (!Paddle) {
+      toast.error("Checkout is still loading - try again in a moment.");
+      return;
+    }
+    if (!paddleReady.current) {
+      Paddle.Environment.set(paddleConfig.environment);
+      Paddle.Initialize({ token: paddleConfig.clientToken });
+      paddleReady.current = true;
+    }
+    Paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      ...(user.email ? { customer: { email: user.email } } : {}),
+      customData: { user_id: user.id },
     });
+  }
+
+  function handleUpgradeInterest() {
+    document.getElementById("billing")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -278,6 +341,46 @@ function Dashboard() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section id="billing" className="mt-10 scroll-mt-24">
+        <h2 className="font-display text-xl font-semibold">Billing</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          You're on the {TIER_LABELS[tier]} plan
+          {isFree && trialEndsAt && !trialExpired
+            ? ` · trial ends ${new Date(trialEndsAt).toLocaleDateString()}`
+            : ""}
+          . Upgrading or switching plans opens Paddle's secure checkout.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {PADDLE_PLANS.map((plan) => {
+            const isCurrent = tier === plan.value;
+            const isUpgrade = TIER_ORDER[tier] < TIER_ORDER[plan.value];
+            return (
+              <div
+                key={plan.value}
+                className={`rounded-2xl border p-5 ${
+                  isCurrent ? "border-accent bg-accent/5" : "border-border bg-card"
+                }`}
+              >
+                <p className="font-display text-lg font-semibold">{TIER_LABELS[plan.value]}</p>
+                <p className="mt-1 font-mono text-2xl">
+                  ${plan.price}
+                  <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">{plan.blurb}</p>
+                <Button
+                  className="mt-4 w-full"
+                  variant={isCurrent ? "outline" : "default"}
+                  disabled={isCurrent}
+                  onClick={() => openCheckout(plan.value)}
+                >
+                  {isCurrent ? "Current plan" : isUpgrade ? "Upgrade" : "Switch plan"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       </section>
     </main>
   );

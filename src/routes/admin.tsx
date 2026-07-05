@@ -889,10 +889,8 @@ function WebhookFailuresSection() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("webhook_failures")
-        .select(
-          "id, received_at, reason, resolved, raw_payload, product:products(title), creator:profiles!webhook_failures_creator_id_fkey(username)",
-        )
-        .order("received_at", { ascending: false })
+        .select("id, provider, event_type, error_message, payload, created_at, resolved_at")
+        .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       return data;
@@ -901,7 +899,10 @@ function WebhookFailuresSection() {
 
   const resolve = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("webhook_failures").update({ resolved: true }).eq("id", id);
+      const { error } = await supabase
+        .from("webhook_failures")
+        .update({ resolved_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -915,26 +916,26 @@ function WebhookFailuresSection() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Stripe webhook payloads we couldn't process automatically - missing/malformed metadata,
-        signature verification failure, or an unrecognized product. Review and grant access
-        manually via Users → Grant access if a real purchase was missed.
+        Stripe and Paddle webhook payloads we couldn't process automatically - missing/malformed
+        metadata, signature verification failure, or an unrecognized product/subscription. Review
+        and grant access or adjust a creator's plan manually if something real was missed.
       </p>
       <TableShell>
         <thead className="border-b border-border bg-surface">
-          <tr><Th>Received</Th><Th>Reason</Th><Th>Creator</Th><Th>Product</Th><Th>Status</Th><Th>Actions</Th></tr>
+          <tr><Th>Received</Th><Th>Provider</Th><Th>Event</Th><Th>Error</Th><Th>Status</Th><Th>Actions</Th></tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {(data ?? []).map((f: any) => (
+          {(data ?? []).map((f) => (
             <tr key={f.id}>
               <Td className="whitespace-nowrap font-mono text-xs">
-                {new Date(f.received_at).toLocaleString()}
+                {new Date(f.created_at).toLocaleString()}
               </Td>
-              <Td className="max-w-xs text-xs">{f.reason}</Td>
-              <Td>{f.creator?.username ? `@${f.creator.username}` : "—"}</Td>
-              <Td>{f.product?.title ?? "—"}</Td>
-              <Td>{f.resolved ? <StatusPill value="resolved" /> : <StatusPill value="open" />}</Td>
+              <Td className="font-mono text-xs uppercase">{f.provider}</Td>
+              <Td className="text-xs">{f.event_type ?? "—"}</Td>
+              <Td className="max-w-xs text-xs">{f.error_message}</Td>
+              <Td>{f.resolved_at ? <StatusPill value="resolved" /> : <StatusPill value="open" />}</Td>
               <Td>
-                {!f.resolved && (
+                {!f.resolved_at && (
                   <Button size="sm" variant="outline" onClick={() => resolve.mutate(f.id)}>
                     Mark resolved
                   </Button>

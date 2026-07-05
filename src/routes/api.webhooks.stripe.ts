@@ -14,13 +14,14 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
       POST: async ({ request }) => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        async function logFailure(reason: string, extra: Record<string, unknown> = {}) {
+        async function logFailure(errorMessage: string, extra: Record<string, unknown> = {}) {
+          const payload = extra.payload as { type?: string } | undefined;
           await supabaseAdmin.from("webhook_failures").insert({
-            reason,
-            product_id: (extra.productId as string) ?? null,
-            creator_id: (extra.creatorId as string) ?? null,
+            provider: "stripe",
+            event_type: payload?.type ?? null,
+            error_message: errorMessage,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            raw_payload: (extra.payload ?? null) as any,
+            payload: (extra.payload ?? null) as any,
           });
         }
 
@@ -47,7 +48,9 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
           metadata.user_id ?? (sessionObj.client_reference_id as string | undefined) ?? null;
 
         if (!productId || !buyerUserId) {
-          await logFailure("missing_metadata", { payload: unverified, productId });
+          await logFailure(`missing_metadata (productId=${productId ?? "none"})`, {
+            payload: unverified,
+          });
           return new Response("Missing product_id/user_id metadata", { status: 400 });
         }
 
@@ -58,7 +61,7 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
           .maybeSingle();
 
         if (!product) {
-          await logFailure("product_not_found", { payload: unverified, productId });
+          await logFailure(`product_not_found (productId=${productId})`, { payload: unverified });
           return new Response("Unknown product", { status: 400 });
         }
 
@@ -70,11 +73,10 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
 
         const secret = payoutDetails?.stripe_webhook_secret;
         if (!secret) {
-          await logFailure("creator_missing_webhook_secret", {
-            payload: unverified,
-            productId,
-            creatorId: product.creator_id,
-          });
+          await logFailure(
+            `creator_missing_webhook_secret (productId=${productId}, creatorId=${product.creator_id})`,
+            { payload: unverified },
+          );
           return new Response("Creator has not configured a webhook secret", { status: 400 });
         }
 
@@ -87,8 +89,8 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
           event = await stripe.webhooks.constructEventAsync(rawBody, signature, secret);
         } catch (err) {
           await logFailure(
-            `signature_verification_failed: ${err instanceof Error ? err.message : "unknown"}`,
-            { payload: unverified, productId, creatorId: product.creator_id },
+            `signature_verification_failed: ${err instanceof Error ? err.message : "unknown"} (productId=${productId}, creatorId=${product.creator_id})`,
+            { payload: unverified },
           );
           return new Response("Signature verification failed", { status: 400 });
         }
@@ -104,11 +106,10 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
           verifiedMetadata.user_id ?? session.client_reference_id ?? buyerUserId;
 
         if (!verifiedProductId || !verifiedUserId) {
-          await logFailure("missing_metadata_in_verified_event", {
-            payload: event,
-            productId: verifiedProductId,
-            creatorId: product.creator_id,
-          });
+          await logFailure(
+            `missing_metadata_in_verified_event (productId=${verifiedProductId}, creatorId=${product.creator_id})`,
+            { payload: event },
+          );
           return new Response("Missing metadata", { status: 400 });
         }
 
@@ -125,11 +126,10 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
         // Ignore unique-violation on the checkout session id - Stripe retries
         // webhook delivery, and we don't want duplicate purchase rows.
         if (purchaseErr && !purchaseErr.message.toLowerCase().includes("duplicate")) {
-          await logFailure(`purchase_insert_failed: ${purchaseErr.message}`, {
-            payload: event,
-            productId: verifiedProductId,
-            creatorId: product.creator_id,
-          });
+          await logFailure(
+            `purchase_insert_failed: ${purchaseErr.message} (productId=${verifiedProductId}, creatorId=${product.creator_id})`,
+            { payload: event },
+          );
           return new Response("Failed to record purchase", { status: 500 });
         }
 
@@ -143,11 +143,10 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
           { onConflict: "user_id,product_id" },
         );
         if (entErr) {
-          await logFailure(`entitlement_upsert_failed: ${entErr.message}`, {
-            payload: event,
-            productId: verifiedProductId,
-            creatorId: product.creator_id,
-          });
+          await logFailure(
+            `entitlement_upsert_failed: ${entErr.message} (productId=${verifiedProductId}, creatorId=${product.creator_id})`,
+            { payload: event },
+          );
           return new Response("Failed to grant entitlement", { status: 500 });
         }
 
