@@ -44,8 +44,12 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
         const sessionObj = (unverified?.data?.object ?? {}) as Record<string, unknown>;
         const metadata = (sessionObj.metadata ?? {}) as Record<string, string>;
         const productId: string | null = metadata.product_id ?? null;
+        // River sets client_reference_id automatically on every Buy click
+        // (see the p/$username/$slug Buy button), so it's the reliable
+        // primary source for the buyer's id. metadata.user_id is kept only
+        // as a fallback for links set up before that existed.
         const buyerUserId: string | null =
-          metadata.user_id ?? (sessionObj.client_reference_id as string | undefined) ?? null;
+          (sessionObj.client_reference_id as string | undefined) ?? metadata.user_id ?? null;
 
         if (!productId || !buyerUserId) {
           await logFailure(`missing_metadata (productId=${productId ?? "none"})`, {
@@ -103,7 +107,7 @@ export const Route = createFileRoute("/api/webhooks/stripe")({
         const verifiedMetadata = session.metadata ?? {};
         const verifiedProductId = verifiedMetadata.product_id ?? productId;
         const verifiedUserId =
-          verifiedMetadata.user_id ?? session.client_reference_id ?? buyerUserId;
+          session.client_reference_id ?? verifiedMetadata.user_id ?? buyerUserId;
 
         if (!verifiedProductId || !verifiedUserId) {
           await logFailure(

@@ -206,6 +206,21 @@ function ProductPage() {
     waitlistMutation.mutate({ productId, join: !currentlyOn });
   }
 
+  // The creator only ever pastes their plain Stripe Payment Link - they
+  // never need to know River tags the outbound URL with the buyer's user
+  // id. We append it here, at click time, rather than storing it, so the
+  // stripe webhook can reliably read client_reference_id back off the
+  // completed checkout session without the creator having to configure
+  // anything themselves.
+  function handleBuy(paymentLinkUrl: string) {
+    if (!user) {
+      navigate({ to: "/auth", search: { mode: "signup", redirect: window.location.pathname } });
+      return;
+    }
+    const separator = paymentLinkUrl.includes("?") ? "&" : "?";
+    window.location.href = `${paymentLinkUrl}${separator}client_reference_id=${encodeURIComponent(user.id)}`;
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen">
@@ -322,10 +337,11 @@ function ProductPage() {
                   {user ? "Get Access" : "Sign in to get access"}
                 </Button>
               ) : product.stripe_payment_link_url ? (
-                <Button asChild className="mt-5 w-full font-medium">
-                  <a href={product.stripe_payment_link_url} target="_blank" rel="noreferrer">
-                    Buy
-                  </a>
+                <Button
+                  className="mt-5 w-full font-medium"
+                  onClick={() => handleBuy(product.stripe_payment_link_url!)}
+                >
+                  {user ? "Buy" : "Sign in to buy"}
                 </Button>
               ) : (
                 <div className="mt-5 space-y-2">

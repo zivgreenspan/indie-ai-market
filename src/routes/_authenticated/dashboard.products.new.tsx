@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Sparkles, Clock } from "lucide-react";
@@ -67,6 +67,23 @@ function NewProductPage() {
     },
   });
 
+  // Webhook secret lives on creator_payout_details (owner/admin-only RLS),
+  // not on this product row - it's per-creator, not per-product. Load
+  // whatever's already on file so re-visiting this form doesn't look like
+  // it's empty when a secret was already saved.
+  const { data: existingWebhookSecret } = useQuery({
+    enabled: !!user,
+    queryKey: ["payout-webhook-secret", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("creator_payout_details")
+        .select("stripe_webhook_secret")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data?.stripe_webhook_secret ?? "";
+    },
+  });
+
   const tier = eligibility?.tier ?? "free";
   const isFree = tier === "free";
 
@@ -89,7 +106,14 @@ function NewProductPage() {
     github_repo_url: "",
     status: "draft" as "draft" | "published",
     stripe_payment_link_url: "",
+    stripe_webhook_secret: "",
   });
+
+  useEffect(() => {
+    if (existingWebhookSecret) {
+      setForm((f) => ({ ...f, stripe_webhook_secret: existingWebhookSecret }));
+    }
+  }, [existingWebhookSecret]);
 
   const githubRegex = /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/;
   const priceCents = Math.round(parseFloat(form.price || "0") * 100);
@@ -142,6 +166,26 @@ function NewProductPage() {
       });
 
       if (error) throw error;
+
+      // Webhook secret is per-creator (creator_payout_details), not
+      // per-product, so it's saved as its own upsert alongside the product
+      // insert rather than as a column on this row. Only touch it if the
+      // creator actually typed something, so we never blank out a secret
+      // that was already on file from a prior product's form.
+      if (isPaid && form.stripe_webhook_secret.trim()) {
+        const { error: secretErr } = await supabase
+          .from("creator_payout_details")
+          .upsert(
+            { user_id: user.id, stripe_webhook_secret: form.stripe_webhook_secret.trim() },
+            { onConflict: "user_id" },
+          );
+        if (secretErr) {
+          toast.error("Product saved, but webhook secret failed to save: " + secretErr.message);
+          navigate({ to: "/dashboard/products" });
+          return;
+        }
+      }
+
       toast.success("Product created");
       navigate({ to: "/dashboard/products" });
     } catch (err) {
@@ -359,21 +403,39 @@ function NewProductPage() {
                 <p className="font-medium text-foreground">
                   To grant access automatically after purchase:
                 </p>
-                <p className="mt-1">In your Stripe dashboard, add a webhook endpoint pointed at:</p>
+                <p className="mt-1">
+                  Add this URL as a webhook endpoint in your Stripe dashboard, listening for the{" "}
+                  <span className="font-mono">checkout.session.completed</span> event.
+                </p>
                 <code className="mt-1 block break-all rounded bg-surface-2 px-2 py-1 font-mono text-[11px] text-foreground">
                   {webhookUrl}
                 </code>
                 <p className="mt-1">
-                  Subscribe it to <span className="font-mono">checkout.session.completed</span>, set{" "}
-                  <span className="font-mono">client_reference_id</span> (or metadata) on your
-                  Payment Link to the buyer's River user ID and this product's ID, then paste the
-                  signing secret Stripe gives you into your{" "}
-                  <Link to="/become-creator" className="text-primary hover:underline">
-                    payout settings
-                  </Link>
-                  .
+                  River automatically tags each buyer when they click Buy, so you never need to set{" "}
+                  <span className="font-mono">client_reference_id</span> yourself. You do need to
+                  add a custom <span className="font-mono">product_id</span> field to your Payment
+                  Link's metadata, set to this product's ID (visible on the product's row in{" "}
+                  <Link to="/dashboard/products" className="text-primary hover:underline">
+                    your product list
+                  </Link>{" "}
+                  once it's saved), so we know which product was purchased.
                 </p>
+                <p className="mt-2">Paste your webhook signing secret below.</p>
               </div>
+              <Input
+                type="password"
+                value={form.stripe_webhook_secret}
+                onChange={(e) => setForm({ ...form, stripe_webhook_secret: e.target.value })}
+                placeholder="whsec_..."
+              />
+              <p className="text-xs text-muted-foreground">
+                This is shared across all of your paid products (one Stripe account per creator), so
+                you only need to set it once — it also lives in your{" "}
+                <Link to="/become-creator" className="text-primary hover:underline">
+                  payout settings
+                </Link>
+                .
+              </p>
             </div>
           )}
 
