@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://wsuhmfwqetghnouxcflf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "river-mcp",
+      "version": "0.1.0",
+      "title": "River"
+    },
+    "tools": [
+      {
+        "name": "search_products",
+        "title": "Search products",
+        "description": "Search River's public catalog of published products. Filter by free-text query, category, or a specific creator's username. Returns up to 20 published products with title, tagline, price, category, and creator.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Free-text search across title, tagline, and description.",
+              "type": "string"
+            },
+            "category": {
+              "description": "Product category slug (e.g. developer_tools, design).",
+              "type": "string"
+            },
+            "creator_username": {
+              "description": "Restrict to a single creator by username.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max results, default 20.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_product",
+        "title": "Get product",
+        "description": "Fetch a single published product by creator username and product slug. Returns full details including description, pricing, category, tags, and creator profile.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "creator_username": {
+              "type": "string",
+              "description": "The creator's River username."
+            },
+            "slug": {
+              "type": "string",
+              "description": "The product slug."
+            }
+          },
+          "required": [
+            "creator_username",
+            "slug"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_creator",
+        "title": "Get creator",
+        "description": "Fetch a creator's public profile by username, including their published products.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "River username of the creator."
+            }
+          },
+          "required": [
+            "username"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_library",
+        "title": "My library",
+        "description": "List products the signed-in River user currently has access to (active entitlements from purchases or free access).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_follows",
+        "title": "Creators I follow",
+        "description": "List the creators the signed-in River user follows.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "my_waitlists",
+        "title": "My waitlists",
+        "description": "List products the signed-in River user has joined a waitlist for.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "follow_creator",
+        "title": "Follow creator",
+        "description": "Follow a River creator on behalf of the signed-in user. Idempotent.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username of the creator to follow."
+            }
+          },
+          "required": [
+            "username"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "unfollow_creator",
+        "title": "Unfollow creator",
+        "description": "Stop following a River creator. Idempotent.",
+        "annotations": {
+          "readOnlyHint": false,
+          "idempotentHint": true,
+          "destructiveHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Username of the creator to unfollow."
+            }
+          },
+          "required": [
+            "username"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
