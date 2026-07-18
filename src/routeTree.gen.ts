@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MyCreatorsRouteImport } from './routes/my-creators'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -21,17 +22,25 @@ import { Route as AccessProductIdRouteImport } from './routes/access.$productId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBecomeCreatorRouteImport } from './routes/_authenticated/become-creator'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard.index'
 import { Route as PUsernameSlugRouteImport } from './routes/p.$username.$slug'
 import { Route as ApiWebhooksStripeRouteImport } from './routes/api.webhooks.stripe'
 import { Route as ApiWebhooksPaddleRouteImport } from './routes/api.webhooks.paddle'
 import { Route as AuthenticatedDashboardProductsRouteImport } from './routes/_authenticated/dashboard.products'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedDashboardProductsIndexRouteImport } from './routes/_authenticated/dashboard.products.index'
 import { Route as AuthenticatedDashboardProductsNewRouteImport } from './routes/_authenticated/dashboard.products.new'
 
 const MyCreatorsRoute = MyCreatorsRouteImport.update({
   id: '/my-creators',
   path: '/my-creators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryRoute = LibraryRouteImport.update({
@@ -89,6 +98,18 @@ const AuthenticatedBecomeCreatorRoute =
     path: '/become-creator',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/',
@@ -116,6 +137,12 @@ const AuthenticatedDashboardProductsRoute =
     path: '/products',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedDashboardProductsIndexRoute =
   AuthenticatedDashboardProductsIndexRouteImport.update({
     id: '/',
@@ -135,12 +162,16 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/explore': typeof ExploreRoute
   '/library': typeof LibraryRoute
+  '/mcp': typeof McpRoute
   '/my-creators': typeof MyCreatorsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/api/webhooks/paddle': typeof ApiWebhooksPaddleRoute
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
@@ -155,11 +186,15 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/explore': typeof ExploreRoute
   '/library': typeof LibraryRoute
+  '/mcp': typeof McpRoute
   '/my-creators': typeof MyCreatorsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/webhooks/paddle': typeof ApiWebhooksPaddleRoute
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
   '/p/$username/$slug': typeof PUsernameSlugRoute
@@ -175,12 +210,16 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/explore': typeof ExploreRoute
   '/library': typeof LibraryRoute
+  '/mcp': typeof McpRoute
   '/my-creators': typeof MyCreatorsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/become-creator': typeof AuthenticatedBecomeCreatorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/access/$productId': typeof AccessProductIdRoute
   '/c/$username': typeof CUsernameRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/dashboard/products': typeof AuthenticatedDashboardProductsRouteWithChildren
   '/api/webhooks/paddle': typeof ApiWebhooksPaddleRoute
   '/api/webhooks/stripe': typeof ApiWebhooksStripeRoute
@@ -197,12 +236,16 @@ export interface FileRouteTypes {
     | '/auth'
     | '/explore'
     | '/library'
+    | '/mcp'
     | '/my-creators'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/become-creator'
     | '/dashboard'
     | '/settings'
     | '/access/$productId'
     | '/c/$username'
+    | '/.mcp/invoke-tool/$tool'
     | '/dashboard/products'
     | '/api/webhooks/paddle'
     | '/api/webhooks/stripe'
@@ -217,11 +260,15 @@ export interface FileRouteTypes {
     | '/auth'
     | '/explore'
     | '/library'
+    | '/mcp'
     | '/my-creators'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/become-creator'
     | '/settings'
     | '/access/$productId'
     | '/c/$username'
+    | '/.mcp/invoke-tool/$tool'
     | '/api/webhooks/paddle'
     | '/api/webhooks/stripe'
     | '/p/$username/$slug'
@@ -236,12 +283,16 @@ export interface FileRouteTypes {
     | '/auth'
     | '/explore'
     | '/library'
+    | '/mcp'
     | '/my-creators'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/become-creator'
     | '/_authenticated/dashboard'
     | '/_authenticated/settings'
     | '/access/$productId'
     | '/c/$username'
+    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/dashboard/products'
     | '/api/webhooks/paddle'
     | '/api/webhooks/stripe'
@@ -258,9 +309,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ExploreRoute: typeof ExploreRoute
   LibraryRoute: typeof LibraryRoute
+  McpRoute: typeof McpRoute
   MyCreatorsRoute: typeof MyCreatorsRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AccessProductIdRoute: typeof AccessProductIdRoute
   CUsernameRoute: typeof CUsernameRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiWebhooksPaddleRoute: typeof ApiWebhooksPaddleRoute
   ApiWebhooksStripeRoute: typeof ApiWebhooksStripeRoute
   PUsernameSlugRoute: typeof PUsernameSlugRoute
@@ -273,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/my-creators'
       fullPath: '/my-creators'
       preLoaderRoute: typeof MyCreatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/library': {
@@ -352,6 +414,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBecomeCreatorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
       path: '/'
@@ -386,6 +462,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/products'
       preLoaderRoute: typeof AuthenticatedDashboardProductsRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard/products/': {
       id: '/_authenticated/dashboard/products/'
@@ -461,9 +544,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ExploreRoute: ExploreRoute,
   LibraryRoute: LibraryRoute,
+  McpRoute: McpRoute,
   MyCreatorsRoute: MyCreatorsRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AccessProductIdRoute: AccessProductIdRoute,
   CUsernameRoute: CUsernameRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiWebhooksPaddleRoute: ApiWebhooksPaddleRoute,
   ApiWebhooksStripeRoute: ApiWebhooksStripeRoute,
   PUsernameSlugRoute: PUsernameSlugRoute,
