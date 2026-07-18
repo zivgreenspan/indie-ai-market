@@ -71,13 +71,16 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
-      // Lovable's managed OAuth proxy (@lovable.dev/cloud-auth-js) - only
-      // recognizes domains registered in this Lovable project, so it won't
-      // work if this app is deployed elsewhere (e.g. Vercel) until that's
-      // set up separately. Using it here because it works out of the box
-      // with zero Google Cloud Console setup for the Lovable-hosted domain.
+      // Preserve the ?redirect target across the Google round-trip by pointing
+      // redirect_uri back at this auth route with the same redirect param —
+      // otherwise Google lands the user on "/" (e.g. the MCP consent flow
+      // would lose its authorization_id).
+      const returnTo =
+        window.location.origin +
+        "/auth" +
+        (redirect ? `?redirect=${encodeURIComponent(redirect)}` : "");
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: returnTo,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in failed");
