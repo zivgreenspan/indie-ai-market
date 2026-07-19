@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CATEGORIES } from "@/lib/categories";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile, useSession } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,6 +51,8 @@ async function fetchFeatured(): Promise<ProductCardData[]> {
 }
 
 function Home() {
+  const { user } = useSession();
+  const { isCreator } = useProfile(user?.id);
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", "featured"],
     queryFn: fetchFeatured,
@@ -84,15 +87,27 @@ function Home() {
                   Start exploring <ArrowRight className="ml-1 size-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/become-creator">Become a creator</Link>
-              </Button>
+              {isCreator ? (
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/dashboard">Creator Dashboard</Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/become-creator">Become a creator</Link>
+                </Button>
+              )}
             </div>
 
             <dl className="mt-12 grid grid-cols-2 gap-x-8 gap-y-4 text-sm md:grid-cols-3">
               <Feature icon={<Zap className="size-4 text-primary" />} label="90% to creators" />
-              <Feature icon={<ShieldCheck className="size-4 text-primary" />} label="Tax & VAT handled globally" />
-              <Feature icon={<Sparkles className="size-4 text-primary" />} label="Curated, not algorithmic" />
+              <Feature
+                icon={<ShieldCheck className="size-4 text-primary" />}
+                label="Tax & VAT handled globally"
+              />
+              <Feature
+                icon={<Sparkles className="size-4 text-primary" />}
+                label="Curated, not algorithmic"
+              />
             </dl>
           </div>
         </div>
@@ -102,7 +117,9 @@ function Home() {
         <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
           <div>
             <h2 className="font-display text-2xl font-semibold md:text-3xl">Fresh on River</h2>
-            <p className="mt-1 text-sm text-muted-foreground">The latest software shipped by creators.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The latest software shipped by creators.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
@@ -129,13 +146,15 @@ function Home() {
             ))}
           </div>
         ) : (
-          <EmptyDiscover />
+          <EmptyDiscover isCreator={isCreator} />
         )}
       </section>
 
       <footer className="mt-12 border-t border-border">
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-8 text-xs text-muted-foreground">
-          <div className="font-mono uppercase tracking-wider">river · {new Date().getFullYear()}</div>
+          <div className="font-mono uppercase tracking-wider">
+            river · {new Date().getFullYear()}
+          </div>
           <div>Built for creators. Made for the world.</div>
         </div>
       </footer>
@@ -152,7 +171,7 @@ function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-function EmptyDiscover() {
+function EmptyDiscover({ isCreator }: { isCreator: boolean }) {
   return (
     <div className="rounded-3xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
       <h3 className="font-display text-2xl font-semibold">Nothing here yet</h3>
@@ -160,7 +179,11 @@ function EmptyDiscover() {
         River is brand new. The first products are landing soon — or you could be one of them.
       </p>
       <Button asChild className="mt-6">
-        <Link to="/become-creator">Be one of the first creators</Link>
+        {isCreator ? (
+          <Link to="/dashboard">Go to your Creator Dashboard</Link>
+        ) : (
+          <Link to="/become-creator">Be one of the first creators</Link>
+        )}
       </Button>
     </div>
   );
