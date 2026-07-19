@@ -62,6 +62,30 @@ export const recordProductVisit = createServerFn({ method: "POST" })
     const nextCount = sameMonth ? product.monthly_visit_count + 1 : 1;
     const capped = tier === "free" && nextCount > TRAFFIC_LIMIT;
 
+    // Rolling into a new month: the outgoing month's count is final and
+    // about to be overwritten, so archive it before that happens. This is
+    // the only place a month boundary is ever detected (there's no cron -
+    // resets are lazy, triggered by the next visit after the boundary), so
+    // it's also the only place a history snapshot can be recorded. One row
+    // per product per month; onConflict makes this safe if a retried
+    // request ever raced another visit into archiving the same month twice.
+    if (!sameMonth) {
+      const { error: historyErr } = await supabaseAdmin.from("product_traffic_history").upsert(
+        {
+          product_id: product.id,
+          month: product.visit_count_month,
+          visit_count: product.monthly_visit_count,
+        },
+        { onConflict: "product_id,month" },
+      );
+      // Don't let a history-logging hiccup block the actual visit/entitlement
+      // check the caller is waiting on - analytics is a read-only nice-to-have,
+      // the traffic cap enforcement below is not.
+      if (historyErr) {
+        console.error("product_traffic_history upsert failed", historyErr.message);
+      }
+    }
+
     // Keep persisting/rolling over the counter even past the cap so a new
     // month still resets correctly, but stop incrementing once we know
     // this visit is blocked so the number doesn't grow unbounded.

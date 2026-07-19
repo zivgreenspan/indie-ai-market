@@ -391,6 +391,38 @@ export type Database = {
           },
         ]
       }
+      product_traffic_history: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          product_id: string
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          product_id: string
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          product_id?: string
+          visit_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_traffic_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: Database["public"]["Enums"]["product_category"]

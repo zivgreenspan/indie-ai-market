@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -14,6 +15,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
@@ -36,6 +45,28 @@ const PADDLE_PLANS: { value: PaidTier; price: number; blurb: string }[] = [
   { value: "studio", price: 29, blurb: "Unlimited products" },
 ];
 const TRAFFIC_LIMIT = 150;
+
+// Only the free tier is traffic-capped today, but keyed by tier (rather
+// than a bare boolean) so a future capped paid tier would just need an
+// entry here - the per-product progress bar below already reads from
+// this map instead of hardcoding "free".
+const TIER_TRAFFIC_LIMITS: Partial<Record<Tier, number>> = { free: TRAFFIC_LIMIT };
+
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
+
+// Stable empty-array fallback so useMemo dependents below don't see a new
+// array identity on every render while data is still loading.
+const EMPTY_ARRAY: never[] = [];
+
+function formatCents(cents: number): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+}
 
 declare global {
   interface Window {
@@ -64,7 +95,7 @@ function Dashboard() {
     queryKey: ["dashboard", user?.id],
     queryFn: async () => {
       const uid = user!.id;
-      const [creator, products, follows, payout] = await Promise.all([
+      const [creator, products, follows, payout, earnings, trafficHistory] = await Promise.all([
         supabase.from("creator_profiles").select("*").eq("user_id", uid).maybeSingle(),
         supabase
           .from("products")
@@ -81,18 +112,30 @@ function Dashboard() {
           .select("payout_method")
           .eq("user_id", uid)
           .maybeSingle(),
+        // Reversed earnings shouldn't count toward revenue anywhere below.
+        supabase
+          .from("creator_earnings")
+          .select("product_id, net_cents, status, created_at")
+          .eq("creator_id", uid)
+          .neq("status", "reversed"),
+        // RLS restricts this to rows whose product belongs to this creator -
+        // no product_id filter needed (product ids aren't known yet at this
+        // point anyway, since the products query above resolves in parallel).
+        supabase.from("product_traffic_history").select("product_id, month, visit_count"),
       ]);
       return {
         creator: creator.data,
         products: products.data ?? [],
         followers: follows.count ?? 0,
         payoutMethod: payout.data?.payout_method ?? null,
+        earnings: earnings.data ?? [],
+        trafficHistory: trafficHistory.data ?? [],
       };
     },
   });
 
   const payoutsReady = !!overview?.payoutMethod;
-  const products = overview?.products ?? [];
+  const products = overview?.products ?? EMPTY_ARRAY;
   const published = products.filter((p) => p.status === "published").length;
   const tier = (overview?.creator?.creator_subscription_tier ?? "free") as Tier;
   const isFree = tier === "free";
@@ -106,6 +149,78 @@ function Dashboard() {
         (p) => p.visit_count_month === month && p.monthly_visit_count >= TRAFFIC_LIMIT,
       )
     : [];
+
+  const trafficLimit = TIER_TRAFFIC_LIMITS[tier];
+  const earnings = overview?.earnings ?? EMPTY_ARRAY;
+  const trafficHistory = overview?.trafficHistory ?? EMPTY_ARRAY;
+
+  const lifetimeRevenueCents = useMemo(
+    () => earnings.reduce((sum, e) => sum + e.net_cents, 0),
+    [earnings],
+  );
+
+  // Account-wide revenue by month, for the top chart.
+  const revenueChartData = useMemo(() => {
+    const byMonth = new Map<string, number>();
+    for (const e of earnings) {
+      const m = e.created_at.slice(0, 7);
+      byMonth.set(m, (byMonth.get(m) ?? 0) + e.net_cents);
+    }
+    return [...byMonth.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([m, cents]) => ({ month: m, revenue: Math.round((cents / 100) * 100) / 100 }));
+  }, [earnings]);
+
+  // Lifetime revenue per product, for the per-product breakdown below.
+  const revenueByProduct = useMemo(() => {
+    const byProduct = new Map<string, number>();
+    for (const e of earnings) {
+      byProduct.set(e.product_id, (byProduct.get(e.product_id) ?? 0) + e.net_cents);
+    }
+    return byProduct;
+  }, [earnings]);
+
+  // Traffic history only ever has *closed-out* months (see
+  // recordProductVisit) - the current, still-open month lives on the
+  // product row itself, so it's merged in here to avoid the chart always
+  // looking one month behind reality.
+  const trafficChartData = useMemo(() => {
+    const byMonth = new Map<string, Map<string, number>>();
+    for (const row of trafficHistory) {
+      const m = byMonth.get(row.month) ?? new Map<string, number>();
+      m.set(row.product_id, row.visit_count);
+      byMonth.set(row.month, m);
+    }
+    for (const p of products) {
+      if (p.visit_count_month !== month) continue;
+      const m = byMonth.get(month) ?? new Map<string, number>();
+      m.set(p.id, p.monthly_visit_count);
+      byMonth.set(month, m);
+    }
+    return [...byMonth.keys()].sort().map((m) => {
+      const row: Record<string, string | number> = { month: m };
+      const counts = byMonth.get(m)!;
+      for (const p of products) {
+        row[p.id] = counts.get(p.id) ?? 0;
+      }
+      return row;
+    });
+  }, [trafficHistory, products, month]);
+
+  const revenueChartConfig = {
+    revenue: { label: "Revenue", color: CHART_COLORS[0] },
+  } as ChartConfig;
+
+  const trafficChartConfig = useMemo(
+    () =>
+      Object.fromEntries(
+        products.map((p, i) => [
+          p.id,
+          { label: p.title, color: CHART_COLORS[i % CHART_COLORS.length] },
+        ]),
+      ) as ChartConfig,
+    [products],
+  );
 
   const getConfig = useServerFn(getPaddleConfig);
   const { data: paddleConfig } = useQuery({
@@ -341,6 +456,156 @@ function Dashboard() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-display text-xl font-semibold">Analytics</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          How your products are performing over time.
+        </p>
+
+        <div className="mt-4 rounded-2xl border border-border bg-card p-6">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Lifetime revenue
+          </p>
+          <p className="mt-1 font-display text-3xl font-semibold">
+            {isLoading ? <Skeleton className="h-9 w-32" /> : formatCents(lifetimeRevenueCents)}
+          </p>
+          <div className="mt-5">
+            {isLoading ? (
+              <Skeleton className="h-64 w-full rounded-xl bg-surface" />
+            ) : revenueChartData.length === 0 ? (
+              <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
+                No revenue recorded yet.
+              </div>
+            ) : (
+              <ChartContainer config={revenueChartConfig} className="h-64 w-full">
+                <BarChart data={revenueChartData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={48}
+                    tickFormatter={(v) => `$${v}`}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent formatter={(value) => [`$${value}`, "Revenue"]} />
+                    }
+                  />
+                  <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-border bg-card p-6">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Traffic over time
+          </p>
+          <div className="mt-5">
+            {isLoading ? (
+              <Skeleton className="h-64 w-full rounded-xl bg-surface" />
+            ) : trafficChartData.length === 0 || products.length === 0 ? (
+              <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
+                No traffic recorded yet.
+              </div>
+            ) : (
+              <ChartContainer config={trafficChartConfig} className="h-64 w-full">
+                <LineChart data={trafficChartData}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis tickLine={false} axisLine={false} width={40} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  {products.map((p) => (
+                    <Line
+                      key={p.id}
+                      dataKey={p.id}
+                      name={p.title}
+                      type="monotone"
+                      stroke={`var(--color-${p.id})`}
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  ))}
+                </LineChart>
+              </ChartContainer>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-border bg-card">
+          <div className="border-b border-border p-4">
+            <p className="font-medium">Per-product breakdown</p>
+          </div>
+          {isLoading ? (
+            <div className="p-4">
+              <Skeleton className="h-24 w-full rounded-xl bg-surface" />
+            </div>
+          ) : products.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              Nothing to show until you have a product.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {products.map((p) => {
+                const revenue = revenueByProduct.get(p.id) ?? 0;
+                const traffic = p.visit_count_month === month ? p.monthly_visit_count : 0;
+                const usagePct = trafficLimit
+                  ? Math.min(100, (traffic / trafficLimit) * 100)
+                  : null;
+                const nearLimit = trafficLimit ? traffic >= trafficLimit * 0.8 : false;
+                return (
+                  <li key={p.id} className="flex flex-wrap items-center justify-between gap-4 p-4">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{p.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-mono uppercase tracking-wide">{p.status}</span>
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Revenue
+                        </p>
+                        <p className="font-mono text-sm font-medium">{formatCents(revenue)}</p>
+                      </div>
+                      <div className="w-40 text-right">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Traffic (this month)
+                        </p>
+                        {trafficLimit ? (
+                          <>
+                            <p
+                              className={`font-mono text-sm font-medium ${
+                                nearLimit ? "text-destructive" : ""
+                              }`}
+                            >
+                              {traffic}/{trafficLimit} monthly visits used
+                            </p>
+                            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                              <div
+                                className={`h-full rounded-full ${
+                                  nearLimit ? "bg-destructive" : "bg-primary"
+                                }`}
+                                style={{ width: `${usagePct}%` }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <p className="font-mono text-sm font-medium">{traffic} visits</p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </section>
 
       <section id="billing" className="mt-10 scroll-mt-24">
